@@ -1,6 +1,8 @@
 # flux-fast
 Making Flux go brrr on GPUs.
 
+![flux_graph](https://github.com/user-attachments/assets/3f09147e-bf3c-4d48-a0ba-fcff6fc14d45)
+
 Summary of the optimizations:
 * Running with the bfloat16 precision
 * Combining q,k,v projections for attention computation
