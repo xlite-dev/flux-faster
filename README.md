@@ -17,3 +17,5 @@ Summary of the optimizations:
     * `coordinate_descent_tuning = True`
     * `coordinate_descent_check_all_directions = True`
 * `torch.export` + Ahead-of-time Inductor (AOTI) + CUDAGraphs
+
+TBD: Installation / benchmarking instructions, detailed discussion on incremental optimizations, etc.
