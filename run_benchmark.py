@@ -17,7 +17,7 @@ def main():
     timings = []
     for _ in range(10):
         begin = time.time()
-        image = pipe(prompt)
+        image = pipeline(prompt).images[0]
         end = time.time()
         timings.append(end - begin)
     timings = torch.tensor(timings)
