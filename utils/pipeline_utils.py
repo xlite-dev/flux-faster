@@ -321,6 +321,8 @@ def use_export_aoti(pipeline, cache_dir, serialize=False):
 
 # If lossy=False, only lossless optimizations are performed
 def optimize(pipeline, cache_dir, lossy=True):
+    pipeline.set_progress_bar_config(disable=True)
+
     # fuse QKV projections in Transformer and VAE
     pipeline.transformer.fuse_qkv_projections()
     pipeline.vae.fuse_qkv_projections()
@@ -334,10 +336,16 @@ def optimize(pipeline, cache_dir, lossy=True):
 
     if lossy:
         # apply float8 quantization
-        from torchao.quantization import quantize_, float8_dynamic_activation_float8_weight
+        from torchao.quantization import quantize_, float8_dynamic_activation_float8_weight, PerRow
 
-        quantize_(pipeline.transformer, float8_dynamic_activation_float8_weight())
-        quantize_(pipeline.vae, float8_dynamic_activation_float8_weight())
+        quantize_(
+            pipeline.transformer,
+            float8_dynamic_activation_float8_weight(granularity=PerRow()),
+        )
+        quantize_(
+            pipeline.vae,
+            float8_dynamic_activation_float8_weight(granularity=PerRow()),
+        )
 
     # set inductor flags
     config = torch._inductor.config
@@ -347,6 +355,11 @@ def optimize(pipeline, cache_dir, lossy=True):
     config.coordinate_descent_tuning = True
     config.coordinate_descent_check_all_directions = True
     config.epilogue_fusion = False  # do not fuse pointwise ops into matmuls
+
+    # From Driss: try these!
+    config.triton.enable_persistent_tma_matmul = True
+    # there's a silly UTF-8 error with CUTLASS for now.. gotta fix that
+    # config.max_autotune_gemm_backends = "ATEN,TRITON,CPP,CUTLASS"
 
     # pipeline = use_compile(pipeline)
     # NB: Using a cached export + AOTI model is not supported yet
