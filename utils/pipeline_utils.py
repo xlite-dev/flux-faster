@@ -349,16 +349,14 @@ def optimize(pipeline, cache_dir, lossy=True):
 
     # set inductor flags
     config = torch._inductor.config
-    # config.disable_progress = False  # show progress bar
     config.conv_1x1_as_mm = True  # treat 1x1 convolutions as matrix muls
     # adjust autotuning algorithm
     config.coordinate_descent_tuning = True
     config.coordinate_descent_check_all_directions = True
     config.epilogue_fusion = False  # do not fuse pointwise ops into matmuls
 
-    # From Driss: try these!
-    config.triton.enable_persistent_tma_matmul = True
-    # there's a silly UTF-8 error with CUTLASS for now.. gotta fix that
+    # TODO: Mess around more with mm settings
+    # config.triton.enable_persistent_tma_matmul = True
     # config.max_autotune_gemm_backends = "ATEN,TRITON,CPP,CUTLASS"
 
     # pipeline = use_compile(pipeline)
