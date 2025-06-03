@@ -11,13 +11,13 @@ def main():
     # warmup
     prompt = "A cat playing with a ball of yarn"
     for _ in range(3):
-        image = pipeline(prompt).images[0]
+        image = pipeline(prompt, num_inference_steps=4, guidance_scale=0.0).images[0]
 
     # run inference 10 times and compute mean / variance
     timings = []
     for _ in range(10):
         begin = time.time()
-        image = pipeline(prompt).images[0]
+        image = pipeline(prompt, num_inference_steps=4, guidance_scale=0.0).images[0]
         end = time.time()
         timings.append(end - begin)
     timings = torch.tensor(timings)
