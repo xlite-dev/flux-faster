@@ -1,7 +1,8 @@
 import random
 import time
 import torch
-from utils.benchmark_utils import create_parser
+from torch.profiler import profile, record_function, ProfilerActivity
+from utils.benchmark_utils import annotate, create_parser
 from utils.pipeline_utils import load_pipeline  # noqa: E402
 
 
@@ -14,6 +15,20 @@ def main(args):
             args.prompt, num_inference_steps=args.num_inference_steps, guidance_scale=0.0
         ).images[0]
 
+    if args.trace_file is not None:
+        # annotate parts of the model within the profiler trace
+        pipeline.transformer.forward = annotate(pipeline.transformer.forward, "denoising_step")
+        pipeline.vae.decode = annotate(pipeline.vae.decode, "decoding")
+        pipeline.encode_prompt = annotate(pipeline.encode_prompt, "prompt_encoding")
+
+        # Generate trace with the PyTorch Profiler
+        with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True) as prof:
+            with record_function("timed_region"):
+                image = pipeline(
+                    args.prompt, num_inference_steps=args.num_inference_steps, guidance_scale=0.0
+                ).images[0]
+        prof.export_chrome_trace(args.trace_file)
+
     # run inference 10 times and compute mean / variance
     timings = []
     for _ in range(10):
@@ -25,7 +40,7 @@ def main(args):
         timings.append(end - begin)
     timings = torch.tensor(timings)
     print('time mean/var:', timings, timings.mean().item(), timings.var().item())
-    image.save("output.png")
+    image.save(args.output_file)
 
 
 if __name__ == "__main__":

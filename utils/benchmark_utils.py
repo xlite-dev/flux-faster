@@ -1,5 +1,7 @@
 import argparse
+import functools
 import os
+from torch.profiler import record_function
 
 
 def create_parser():
@@ -12,6 +14,9 @@ def create_parser():
     parser.add_argument("--cache-dir", type=str, default=os.path.expandvars("$HOME/.cache/flux-fast"))
     parser.add_argument("--device", type=str, choices=["cuda", "cpu"], default="cuda")
     parser.add_argument("--num_inference_steps", type=int, default=4)
+    parser.add_argument("--output-file", type=str, default="output.png")
+    # file path for optional output PyTorch Profiler trace
+    parser.add_argument("--trace-file", type=str, default=None)
 
     # optimizations - all are on by default but each can be disabled
     parser.add_argument("--disable_bf16", action="store_true")
@@ -29,3 +34,12 @@ def create_parser():
     # flags for tuning inductor
     parser.add_argument("--disable_inductor_tuning_flags", action="store_true")
     return parser
+
+
+# helper to annotate a function within a profiler trace
+def annotate(f, title):
+    @functools.wraps(f)
+    def _f(*args, **kwargs):
+        with record_function(title):
+            return f(*args, **kwargs)
+    return _f
