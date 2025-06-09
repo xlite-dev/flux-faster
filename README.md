@@ -108,32 +108,6 @@ TODO: Add plot!
 </details>
 
 <details>
-  <summary>channels_last memory format</summary>
-
-```python
-from diffusers import FluxPipeline
-
-# Load the pipeline in full-precision and place its model components on CUDA.
-pipeline = FluxPipeline.from_pretrained(
-    "black-forest-labs/FLUX.1-schnell"
-).to("cuda")
-
-# Use channels_last memory format
-pipeline.transformer = pipeline.transformer.to(memory_format=torch.channels_last)
-pipeline.vae = pipeline.vae.to(memory_format=torch.channels_last)
-
-# compilation details omitted (see above)
-...
-
-prompt = "A cat playing with a ball of yarn"
-image = pipe(prompt, num_inference_steps=4).images[0]
-```
-
-TODO: Add plot!
-
-</details>
-
-<details>
   <summary>Combining attention projection matrices</summary>
 
 ```python
@@ -151,6 +125,35 @@ pipeline.vae = pipeline.vae.to(memory_format=torch.channels_last)
 # Combine attention projection matrices for (q, k, v)
 pipeline.transformer.fuse_qkv_projections()
 pipeline.vae.fuse_qkv_projections()
+
+# compilation details omitted (see above)
+...
+
+prompt = "A cat playing with a ball of yarn"
+image = pipe(prompt, num_inference_steps=4).images[0]
+```
+
+Note that `torch.compile` is able to perform this fusion automatically, so we do not
+observe a speedup from the fusion when `torch.compile` is enabled.
+
+TODO: Add plot!
+
+</details>
+
+<details>
+  <summary>channels_last memory format</summary>
+
+```python
+from diffusers import FluxPipeline
+
+# Load the pipeline in full-precision and place its model components on CUDA.
+pipeline = FluxPipeline.from_pretrained(
+    "black-forest-labs/FLUX.1-schnell"
+).to("cuda")
+
+# Use channels_last memory format
+pipeline.transformer = pipeline.transformer.to(memory_format=torch.channels_last)
+pipeline.vae = pipeline.vae.to(memory_format=torch.channels_last)
 
 # compilation details omitted (see above)
 ...
