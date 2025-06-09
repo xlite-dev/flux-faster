@@ -152,8 +152,8 @@ pipeline = FluxPipeline.from_pretrained(
 ).to("cuda")
 
 # Use channels_last memory format
-pipeline.transformer = pipeline.transformer.to(memory_format=torch.channels_last)
-pipeline.vae = pipeline.vae.to(memory_format=torch.channels_last)
+pipeline.transformer.to(memory_format=torch.channels_last)
+pipeline.vae.to(memory_format=torch.channels_last)
 
 # compilation details omitted (see above)
 ...
@@ -178,8 +178,8 @@ pipeline = FluxPipeline.from_pretrained(
 ).to("cuda")
 
 # Use channels_last memory format
-pipeline.transformer = pipeline.transformer.to(memory_format=torch.channels_last)
-pipeline.vae = pipeline.vae.to(memory_format=torch.channels_last)
+pipeline.transformer.to(memory_format=torch.channels_last)
+pipeline.vae.to(memory_format=torch.channels_last)
 
 # Combine attention projection matrices for (q, k, v)
 pipeline.transformer.fuse_qkv_projections()
@@ -211,8 +211,8 @@ pipeline = FluxPipeline.from_pretrained(
 ).to("cuda")
 
 # Use channels_last memory format
-pipeline.transformer = pipeline.transformer.to(memory_format=torch.channels_last)
-pipeline.vae = pipeline.vae.to(memory_format=torch.channels_last)
+pipeline.transformer.to(memory_format=torch.channels_last)
+pipeline.vae.to(memory_format=torch.channels_last)
 
 # Combine attention projection matrices for (q, k, v)
 pipeline.transformer.fuse_qkv_projections()
@@ -252,8 +252,8 @@ pipeline = FluxPipeline.from_pretrained(
 ).to("cuda")
 
 # Use channels_last memory format
-pipeline.transformer = pipeline.transformer.to(memory_format=torch.channels_last)
-pipeline.vae = pipeline.vae.to(memory_format=torch.channels_last)
+pipeline.transformer.to(memory_format=torch.channels_last)
+pipeline.vae.to(memory_format=torch.channels_last)
 
 # Combine attention projection matrices for (q, k, v)
 pipeline.transformer.fuse_qkv_projections()
@@ -448,8 +448,8 @@ pipeline = FluxPipeline.from_pretrained(
 ).to("cuda")
 
 # Use channels_last memory format
-pipeline.transformer = pipeline.transformer.to(memory_format=torch.channels_last)
-pipeline.vae = pipeline.vae.to(memory_format=torch.channels_last)
+pipeline.transformer.to(memory_format=torch.channels_last)
+pipeline.vae.to(memory_format=torch.channels_last)
 
 # Combine attention projection matrices for (q, k, v)
 pipeline.transformer.fuse_qkv_projections()
