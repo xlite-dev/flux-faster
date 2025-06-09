@@ -21,7 +21,7 @@ python run_benchmark.py \
     --disable_fa3 \
     --disable_quant \
     --disable_inductor_tuning_flags \
-    > bfloat16.txt 2>&1
+    > bf16.txt 2>&1
 
 # bfloat16 + torch.compile
 python run_benchmark.py \
@@ -32,7 +32,7 @@ python run_benchmark.py \
     --disable_fa3 \
     --disable_quant \
     --disable_inductor_tuning_flags \
-    > bf16_compile 2>&1
+    > bf16_compile.txt 2>&1
 
 # bfloat16 + torch.compile + qkv projection
 python run_benchmark.py \
