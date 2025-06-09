@@ -1,23 +1,26 @@
 import random
 import time
 import torch
+from utils.benchmark_utils import create_parser
 from utils.pipeline_utils import load_pipeline  # noqa: E402
 
 
-# TODO: Update this to match diffusion-fast, make things more configurable via arg parser, etc.
-def main():
-    pipeline = load_pipeline({})
+def main(args):
+    pipeline = load_pipeline(args)
 
     # warmup
-    prompt = "A cat playing with a ball of yarn"
     for _ in range(3):
-        image = pipeline(prompt, num_inference_steps=4, guidance_scale=0.0).images[0]
+        image = pipeline(
+            args.prompt, num_inference_steps=args.num_inference_steps, guidance_scale=0.0
+        ).images[0]
 
     # run inference 10 times and compute mean / variance
     timings = []
     for _ in range(10):
         begin = time.time()
-        image = pipeline(prompt, num_inference_steps=4, guidance_scale=0.0).images[0]
+        image = pipeline(
+            args.prompt, num_inference_steps=args.num_inference_steps, guidance_scale=0.0
+        ).images[0]
         end = time.time()
         timings.append(end - begin)
     timings = torch.tensor(timings)
@@ -30,4 +33,6 @@ if __name__ == "__main__":
     random.seed(seed)
     torch.manual_seed(seed)
 
-    main()
+    parser = create_parser()
+    args = parser.parse_args()
+    main(args)

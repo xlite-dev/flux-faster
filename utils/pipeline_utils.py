@@ -234,6 +234,9 @@ def download_hosted_file(filename, output_path):
 
 
 def use_export_aoti(pipeline, cache_dir, serialize=False):
+    # create cache dir if needed
+    pathlib.Path(cache_dir).mkdir(parents=True, exist_ok=True)
+
     def _example_tensor(*shape):
         return torch.randn(*shape, device="cuda", dtype=torch.bfloat16)
 
@@ -330,23 +333,25 @@ def use_export_aoti(pipeline, cache_dir, serialize=False):
     return pipeline
 
 
-# If lossy=False, only lossless optimizations are performed
-def optimize(pipeline, cache_dir, lossy=True):
+def optimize(pipeline, args):
     pipeline.set_progress_bar_config(disable=True)
 
     # fuse QKV projections in Transformer and VAE
-    pipeline.transformer.fuse_qkv_projections()
-    pipeline.vae.fuse_qkv_projections()
+    if not args.disable_fused_projections:
+        pipeline.transformer.fuse_qkv_projections()
+        pipeline.vae.fuse_qkv_projections()
 
     # Use flash attention v3
-    pipeline.transformer.set_attn_processor(FlashFusedFluxAttnProcessor3_0())
+    if not args.disable_fa3:
+        pipeline.transformer.set_attn_processor(FlashFusedFluxAttnProcessor3_0())
 
     # switch memory layout to Torch's preferred, channels_last
-    pipeline.transformer.to(memory_format=torch.channels_last)
-    pipeline.vae.to(memory_format=torch.channels_last)
+    if not args.disable_channels_last:
+        pipeline.transformer.to(memory_format=torch.channels_last)
+        pipeline.vae.to(memory_format=torch.channels_last)
 
-    if lossy:
-        # apply float8 quantization
+    # apply float8 quantization
+    if not args.disable_quant:
         from torchao.quantization import quantize_, float8_dynamic_activation_float8_weight #, PerRow
 
         quantize_(
@@ -356,33 +361,35 @@ def optimize(pipeline, cache_dir, lossy=True):
         )
 
     # set inductor flags
-    config = torch._inductor.config
-    config.conv_1x1_as_mm = True  # treat 1x1 convolutions as matrix muls
-    # adjust autotuning algorithm
-    config.coordinate_descent_tuning = True
-    config.coordinate_descent_check_all_directions = True
-    config.epilogue_fusion = False  # do not fuse pointwise ops into matmuls
+    if not args.disable_inductor_tuning_flags:
+        config = torch._inductor.config
+        config.conv_1x1_as_mm = True  # treat 1x1 convolutions as matrix muls
+        # adjust autotuning algorithm
+        config.coordinate_descent_tuning = True
+        config.coordinate_descent_check_all_directions = True
+        config.epilogue_fusion = False  # do not fuse pointwise ops into matmuls
 
-    # TODO: Mess around more with mm settings
-    # config.triton.enable_persistent_tma_matmul = True
-    # config.max_autotune_gemm_backends = "ATEN,TRITON,CPP,CUTLASS"
+        # TODO: Test out more mm settings
+        # config.triton.enable_persistent_tma_matmul = True
+        # config.max_autotune_gemm_backends = "ATEN,TRITON,CPP,CUTLASS"
 
-    # pipeline = use_compile(pipeline)
-    # NB: Using a cached export + AOTI model is not supported yet
-    pipeline = use_export_aoti(pipeline, cache_dir=cache_dir, serialize=True)
+    if args.compile_export_mode == "compile":
+        pipeline = use_compile(pipeline)
+    elif args.compile_export_mode == "export_aoti":
+        # NB: Using a cached export + AOTI model is not supported yet
+        pipeline = use_export_aoti(pipeline, cache_dir=args.cache_dir, serialize=True)
+    elif args.compile_export_mode == "disabled":
+        pass
+    else:
+        raise RuntimeError(
+            "expected compile_export_mode arg to be one of {compile, export_aoti, disabled}"
+        )
 
     return pipeline
 
 
-def load_pipeline(options):
-    # create cache dir if needed
-    cache_dir = options.get("cache_dir", os.path.expandvars("$HOME/.cache/flux-fast"))
-    pathlib.Path(cache_dir).mkdir(parents=True, exist_ok=True)
-
-    pipeline = FluxPipeline.from_pretrained(
-        "black-forest-labs/FLUX.1-schnell", torch_dtype=torch.bfloat16
-    ).to("cuda")
-
-    pipeline = optimize(pipeline, cache_dir=cache_dir, lossy=True)
-
+def load_pipeline(args):
+    load_dtype = torch.float32 if args.disable_bf16 else torch.bfloat16
+    pipeline = FluxPipeline.from_pretrained(args.ckpt, torch_dtype=load_dtype).to(args.device)
+    pipeline = optimize(pipeline, args)
     return pipeline
