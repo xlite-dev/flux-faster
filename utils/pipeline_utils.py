@@ -168,6 +168,7 @@ class FlashFusedFluxAttnProcessor3_0:
             return hidden_states
 
 
+# wrapper to automatically handle CUDAGraph record / replay over the given function
 def cudagraph(f):
     from torch.utils._pytree import tree_map_only
 
@@ -176,20 +177,29 @@ def cudagraph(f):
         key = hash(tuple(tuple(kwargs[a].shape) for a in sorted(kwargs.keys())
                          if isinstance(kwargs[a], torch.Tensor)))
         if key in _graphs:
+            # use the cached wrapper if one exists. this will perform CUDAGraph replay
             wrapped, *_ = _graphs[key]
             return wrapped(*args, **kwargs)
+
+        # record a new CUDAGraph and cache it for future use
         g = torch.cuda.CUDAGraph()
         in_args, in_kwargs = tree_map_only(torch.Tensor, lambda t: t.clone(), (args, kwargs))
         f(*in_args, **in_kwargs) # stream warmup
         with torch.cuda.graph(g):
             out_tensors = f(*in_args, **in_kwargs)
         def wrapped(*args, **kwargs):
+            # note that CUDAGraphs require inputs / outputs to be in fixed memory locations.
+            # inputs must be copied into the fixed input memory locations.
             [a.copy_(b) for a, b in zip(in_args, args) if isinstance(a, torch.Tensor)]
             for key in kwargs:
                 if isinstance(kwargs[key], torch.Tensor):
                     in_kwargs[key].copy_(kwargs[key])
             g.replay()
+            # clone() outputs on the way out to disconnect them from the fixed output memory
+            # locations. this allows for CUDAGraph reuse without accidentally overwriting memory
             return [o.clone() for o in out_tensors]
+
+        # cache function that does CUDAGraph replay
         _graphs[key] = (wrapped, g, in_args, in_kwargs, out_tensors)
         return wrapped(*args, **kwargs)
     return f_
@@ -266,11 +276,12 @@ def use_export_aoti(pipeline, cache_dir, serialize=False):
     with torch.no_grad():
         loaded_transformer(**transformer_kwargs)
 
-    # Apply CUDAGraphs
+    # Apply CUDAGraphs. CUDAGraphs are utilized in torch.compile with mode="max-autotune", but
+    # they must be manually applied for torch.export + AOTI.
     loaded_transformer = cudagraph(loaded_transformer)
     pipeline.transformer.forward = loaded_transformer
 
-    # warmup after cudagraping
+    # warmup after cudagraphing
     with torch.no_grad():
         pipeline.transformer(**transformer_kwargs)
 
@@ -336,15 +347,12 @@ def optimize(pipeline, cache_dir, lossy=True):
 
     if lossy:
         # apply float8 quantization
-        from torchao.quantization import quantize_, float8_dynamic_activation_float8_weight, PerRow
+        from torchao.quantization import quantize_, float8_dynamic_activation_float8_weight #, PerRow
 
         quantize_(
             pipeline.transformer,
-            float8_dynamic_activation_float8_weight(granularity=PerRow()),
-        )
-        quantize_(
-            pipeline.vae,
-            float8_dynamic_activation_float8_weight(granularity=PerRow()),
+            float8_dynamic_activation_float8_weight(),
+            # float8_dynamic_activation_float8_weight(granularity=PerRow()),
         )
 
     # set inductor flags
