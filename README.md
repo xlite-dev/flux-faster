@@ -134,7 +134,7 @@ image = pipe(prompt, num_inference_steps=4).images[0]
 ```
 
 Note that `torch.compile` is able to perform this fusion automatically, so we do not
-observe a speedup from the fusion when `torch.compile` is enabled.
+observe a speedup from the fusion (outside of noise) when `torch.compile` is enabled.
 
 TODO: Add plot!
 
