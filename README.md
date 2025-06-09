@@ -19,7 +19,10 @@ Summary of the optimizations:
 * `torch.export` + Ahead-of-time Inductor (AOTI) + CUDAGraphs
 
 ## Setup
-We rely on pure PyTorch for the optimizations. Specifically, we rely on a recent nightly version of PyTorch (e.g. `torch==2.8.0.dev20250605+cu126`).
+We rely on pure PyTorch for the optimizations. Currently, a relatively recent nightly version of PyTorch is required.
+The numbers reported here were gathered using:
+* `torch==2.8.0.dev20250605+cu126`
+* `diffusers==0.33.1`
 
 For hardware, we used a 96GB 700W H100 GPU. Some of the optimizations applied (BFloat16, torch.compile, Combining q,k,v projections, dynamic float8 quantization) are available on CPU as well.
 
