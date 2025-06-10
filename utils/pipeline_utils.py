@@ -345,9 +345,8 @@ def optimize(pipeline, args):
     if not args.disable_fa3:
         pipeline.transformer.set_attn_processor(FlashFusedFluxAttnProcessor3_0())
 
-    # switch memory layout to Torch's preferred, channels_last
+    # switch memory layout to channels_last
     if not args.disable_channels_last:
-        pipeline.transformer.to(memory_format=torch.channels_last)
         pipeline.vae.to(memory_format=torch.channels_last)
 
     # apply float8 quantization

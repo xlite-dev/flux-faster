@@ -35,6 +35,12 @@ def main(args):
         pipeline.transformer.forward = annotate(pipeline.transformer.forward, "denoising_step")
         pipeline.vae.decode = annotate(pipeline.vae.decode, "decoding")
         pipeline.encode_prompt = annotate(pipeline.encode_prompt, "prompt_encoding")
+        pipeline.image_processor.postprocess = annotate(
+            pipeline.image_processor.postprocess, "postprocessing"
+        )
+        pipeline.image_processor.numpy_to_pil = annotate(
+            pipeline.image_processor.numpy_to_pil, "pil_conversion"
+        )
 
         # Generate trace with the PyTorch Profiler
         with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True) as prof:
