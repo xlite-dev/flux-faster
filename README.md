@@ -19,10 +19,11 @@ Summary of the optimizations:
 * `torch.export` + Ahead-of-time Inductor (AOTI) + CUDAGraphs
 
 ## Setup
-We rely on pure PyTorch for the optimizations. Currently, a relatively recent nightly version of PyTorch is required.
+We rely primarily on pure PyTorch for the optimizations. Currently, a relatively recent nightly version of PyTorch is required.
 The numbers reported here were gathered using:
 * `torch==2.8.0.dev20250605+cu126`
 * `diffusers==0.33.1`
+* `flash_attn_3==3.0.0b1`
 
 For hardware, we used a 96GB 700W H100 GPU. Some of the optimizations applied (BFloat16, torch.compile, Combining q,k,v projections, dynamic float8 quantization) are available on CPU as well.
 
@@ -48,8 +49,6 @@ prompt = "A cat playing with a ball of yarn"
 image = pipe(prompt, num_inference_steps=4).images[0]
 ```
 
-TODO: Add plot!
-
 </details>
 
 <details>
@@ -66,8 +65,6 @@ pipeline = FluxPipeline.from_pretrained(
 prompt = "A cat playing with a ball of yarn"
 image = pipe(prompt, num_inference_steps=4).images[0]
 ```
-
-TODO: Add plot!
 
 </details>
 
@@ -103,8 +100,6 @@ prompt = "A cat playing with a ball of yarn"
 image = pipe(prompt, num_inference_steps=4).images[0]
 ```
 
-TODO: Add plot!
-
 </details>
 
 <details>
@@ -135,8 +130,6 @@ image = pipe(prompt, num_inference_steps=4).images[0]
 Note that `torch.compile` is able to perform this fusion automatically, so we do not
 observe a speedup from the fusion (outside of noise) when `torch.compile` is enabled.
 
-TODO: Add plot!
-
 </details>
 
 <details>
@@ -160,12 +153,16 @@ prompt = "A cat playing with a ball of yarn"
 image = pipe(prompt, num_inference_steps=4).images[0]
 ```
 
-TODO: Add plot!
-
 </details>
 
 <details>
   <summary>Flash Attention V3</summary>
+
+  Flash Attention V3 is substantially faster on H100s than the previous iteration FA2.
+  As this kernel isn't quite available yet within PyTorch Core, we implement a custom
+  attention processor `FlashFusedFluxAttnProcessor3_0` that uses the `flash_attention`
+  python bindings directly. We also ensure proper PyTorch custom op integration so that
+  the op integrates well with `torch.compile` / `torch.export`.
 
 ```python
 from diffusers import FluxPipeline
@@ -191,8 +188,6 @@ pipeline.transformer.set_attn_processor(FlashFusedFluxAttnProcessor3_0())
 prompt = "A cat playing with a ball of yarn"
 image = pipe(prompt, num_inference_steps=4).images[0]
 ```
-
-TODO: Add plot!
 
 </details>
 
@@ -231,8 +226,6 @@ quantize_(
 prompt = "A cat playing with a ball of yarn"
 image = pipe(prompt, num_inference_steps=4).images[0]
 ```
-
-TODO: Add plot!
 
 </details>
 
@@ -279,8 +272,6 @@ config.epilogue_fusion = False  # do not fuse pointwise ops into matmuls
 prompt = "A cat playing with a ball of yarn"
 image = pipe(prompt, num_inference_steps=4).images[0]
 ```
-
-TODO: Add plot!
 
 </details>
 
@@ -474,7 +465,5 @@ pipeline = use_export_aoti(pipeline, cache_dir=args.cache_dir, serialize=False)
 prompt = "A cat playing with a ball of yarn"
 image = pipe(prompt, num_inference_steps=4).images[0]
 ```
-
-TODO: Add plot!
 
 </details>
