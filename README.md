@@ -37,6 +37,10 @@ For hardware, we used a 96GB 700W H100 GPU. Some of the optimizations applied (B
 <details>
   <summary>Baseline</summary>
 
+  For completeness, we demonstrate a (terrible) baseline here using the default `torch.float32` dtype.
+  There's no practical reason do this over loading in `torch.bfloat16`, and the results are slow enough
+  that they ruin the readability of the graph above when included (~7.5 sec).
+
 ```python
 from diffusers import FluxPipeline
 
