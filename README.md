@@ -8,7 +8,7 @@ Summary of the optimizations:
 * Running with the bfloat16 precision
 * `torch.compile`
 * Combining q,k,v projections for attention computation
-* `torch.channels_last` memory format for the transformer
+* `torch.channels_last` memory format for the decoder output
 * Flash Attention v3 (FA3) with (unscaled) conversion of inputs to `torch.float8_e4m3fn`
 * Dynamic float8 quantization and quantization of Linear layer weights via `torchao`'s `float8_dynamic_activation_float8_weight`
 * Inductor flags:
@@ -119,7 +119,6 @@ pipeline = FluxPipeline.from_pretrained(
 ).to("cuda")
 
 # Use channels_last memory format
-pipeline.transformer = pipeline.transformer.to(memory_format=torch.channels_last)
 pipeline.vae = pipeline.vae.to(memory_format=torch.channels_last)
 
 # Combine attention projection matrices for (q, k, v)
@@ -152,7 +151,6 @@ pipeline = FluxPipeline.from_pretrained(
 ).to("cuda")
 
 # Use channels_last memory format
-pipeline.transformer.to(memory_format=torch.channels_last)
 pipeline.vae.to(memory_format=torch.channels_last)
 
 # compilation details omitted (see above)
@@ -178,7 +176,6 @@ pipeline = FluxPipeline.from_pretrained(
 ).to("cuda")
 
 # Use channels_last memory format
-pipeline.transformer.to(memory_format=torch.channels_last)
 pipeline.vae.to(memory_format=torch.channels_last)
 
 # Combine attention projection matrices for (q, k, v)
@@ -211,7 +208,6 @@ pipeline = FluxPipeline.from_pretrained(
 ).to("cuda")
 
 # Use channels_last memory format
-pipeline.transformer.to(memory_format=torch.channels_last)
 pipeline.vae.to(memory_format=torch.channels_last)
 
 # Combine attention projection matrices for (q, k, v)
@@ -252,7 +248,6 @@ pipeline = FluxPipeline.from_pretrained(
 ).to("cuda")
 
 # Use channels_last memory format
-pipeline.transformer.to(memory_format=torch.channels_last)
 pipeline.vae.to(memory_format=torch.channels_last)
 
 # Combine attention projection matrices for (q, k, v)
@@ -448,7 +443,6 @@ pipeline = FluxPipeline.from_pretrained(
 ).to("cuda")
 
 # Use channels_last memory format
-pipeline.transformer.to(memory_format=torch.channels_last)
 pipeline.vae.to(memory_format=torch.channels_last)
 
 # Combine attention projection matrices for (q, k, v)
