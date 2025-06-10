@@ -21,17 +21,71 @@ Summary of the optimizations:
 ## Setup
 We rely primarily on pure PyTorch for the optimizations. Currently, a relatively recent nightly version of PyTorch is required.
 The numbers reported here were gathered using:
-* `torch==2.8.0.dev20250605+cu126`
+* `torch==2.8.0.dev20250605+cu126` - note that we rely on some fixes since 2.7
+* `torchao==0.12.0.dev20250610+cu126` - note that we rely on a fix in the 06/10 nightly
 * `diffusers==0.33.1`
 * `flash_attn_3==3.0.0b1`
 
+To install deps:
+```
+pip install --pre torch==2.8.0.dev20250605+cu126 --index-url https://download.pytorch.org/whl/nightly/cu126
+pip install --pre torchao==0.12.0.dev20250609+cu126 --index-url https://download.pytorch.org/whl/nightly/cu126
+pip install diffusers==0.33.1
+MAX_JOBS=4 pip install flash-attn==3.0.0b1 --no-build-isolation
+```
+
 For hardware, we used a 96GB 700W H100 GPU. Some of the optimizations applied (BFloat16, torch.compile, Combining q,k,v projections, dynamic float8 quantization) are available on CPU as well.
 
-## Running a benchmarking experiment
-[`run_benchmark.py`](./run_benchmark.py) is the main script for benchmarking the different optimization techniques. After an experiment has been done, you should expect to see two files:
+## Benchmarking
+[`run_benchmark.py`](./run_benchmark.py) is the main script for benchmarking the different optimization techniques.
+Usage:
+```
+usage: run_benchmark.py [-h] [--ckpt CKPT] [--prompt PROMPT] [--cache-dir CACHE_DIR]
+                        [--device {cuda,cpu}] [--num_inference_steps NUM_INFERENCE_STEPS]
+                        [--output-file OUTPUT_FILE] [--trace-file TRACE_FILE] [--disable_bf16]
+                        [--compile_export_mode {compile,export_aoti,disabled}]
+                        [--disable_fused_projections] [--disable_channels_last] [--disable_fa3]
+                        [--disable_quant] [--disable_inductor_tuning_flags]
 
-* A `.csv` file with all the benchmarking numbers. TODO: do this instead of printing to STDOUT
-* A `.png` image file corresponding to the experiment.
+options:
+  -h, --help            show this help message and exit
+  --ckpt CKPT           Model checkpoint path (default: black-forest-labs/FLUX.1-schnell)
+  --prompt PROMPT       Text prompt (default: A cat playing with a ball of yarn)
+  --cache-dir CACHE_DIR
+                        Cache directory for storing exported models (default:
+                        ~/.cache/flux-fast)
+  --device {cuda,cpu}   Device to use (default: cuda)
+  --num_inference_steps NUM_INFERENCE_STEPS
+                        Number of denoising steps (default: 4)
+  --output-file OUTPUT_FILE
+                        Output image file path (default: output.png)
+  --trace-file TRACE_FILE
+                        Output PyTorch Profiler trace file path (default: None)
+  --disable_bf16        Disables usage of torch.bfloat16 (default: False)
+  --compile_export_mode {compile,export_aoti,disabled}
+                        Configures how torch.compile or torch.export + AOTI are used (default:
+                        export_aoti)
+  --disable_fused_projections
+                        Disables fused q,k,v projections (default: False)
+  --disable_channels_last
+                        Disables usage of torch.channels_last memory format (default: False)
+  --disable_fa3         Disables use of Flash Attention V3 (default: False)
+  --disable_quant       Disables usage of dynamic float8 quantization (default: False)
+  --disable_inductor_tuning_flags
+                        Disables use of inductor tuning flags (default: False)
+```
+
+Note that all optimizations are on by default and each can be individually toggled. Example run:
+```
+# Run with all optimizations and output a trace file alongside benchmark numbers
+python run_benchmark.py --trace-file profiler_trace.json.gz
+```
+
+After an experiment has been run, you should expect to see
+mean / variance times in seconds for 10 benchmarking runs printed to STDOUT, as well as:
+
+* A `.png` image file corresponding to the experiment (e.g. `output.png`). The path can be configured via `--output-file`.
+* An optional PyTorch profiler trace (e.g. `profiler_trace.json.gz`). The path can be configured via `--trace-file`
 
 ## Improvements, progressively
 <details>
