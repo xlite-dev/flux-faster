@@ -363,10 +363,10 @@ def optimize(pipeline, args):
     if not args.disable_inductor_tuning_flags:
         config = torch._inductor.config
         config.conv_1x1_as_mm = True  # treat 1x1 convolutions as matrix muls
+        config.epilogue_fusion = False  # do not fuse pointwise ops into matmuls
         # adjust autotuning algorithm
         config.coordinate_descent_tuning = True
         config.coordinate_descent_check_all_directions = True
-        config.epilogue_fusion = False  # do not fuse pointwise ops into matmuls
 
         # TODO: Test out more mm settings
         # config.triton.enable_persistent_tma_matmul = True
