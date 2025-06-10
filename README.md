@@ -158,11 +158,12 @@ image = pipe(prompt, num_inference_steps=4).images[0]
 <details>
   <summary>Flash Attention V3</summary>
 
-  Flash Attention V3 is substantially faster on H100s than the previous iteration FA2.
-  As this kernel isn't quite available yet within PyTorch Core, we implement a custom
+  Flash Attention V3 is substantially faster on H100s than the previous iteration FA2, due
+  in large part to float8 support. As this kernel isn't quite available yet within PyTorch Core, we implement a custom
   attention processor [`FlashFusedFluxAttnProcessor3_0`](./utils/pipeline_utils.py#L70) that uses the `flash_attn_interface`
   python bindings directly. We also ensure proper PyTorch custom op integration so that
-  the op integrates well with `torch.compile` / `torch.export`.
+  the op integrates well with `torch.compile` / `torch.export`. Inputs are converted to float8 in an unscaled fashion before
+  kernel invocation and outputs are converted back to the original dtype on the way out.
 
 ```python
 from diffusers import FluxPipeline
