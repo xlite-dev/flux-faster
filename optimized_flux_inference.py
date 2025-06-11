@@ -12,10 +12,10 @@ def load_pipeline(args):
     is_timestep_distilled = not pipeline.transformer.config.guidance_embeds
 
     transformer_package_path = os.path.join(
-        args.cache_dir, "exported_transformer.pt2" if is_timestep_distilled else "exported_dev_transformer.pt"
+        args.cache_dir, "exported_transformer.pt2" if is_timestep_distilled else "exported_dev_transformer.pt2"
     )
     decoder_package_path = os.path.join(
-        args.cache_dir, "exported_decoder.pt2" if is_timestep_distilled else "exported_dev_decoder.pt"
+        args.cache_dir, "exported_decoder.pt2" if is_timestep_distilled else "exported_dev_decoder.pt2"
     )
     loaded_transformer = load_package(transformer_package_path)
     loaded_decoder = load_package(decoder_package_path)

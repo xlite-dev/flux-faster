@@ -270,7 +270,9 @@ def use_export_aoti(pipeline, cache_dir, serialize=False, is_timestep_distilled=
     }
 
     # Possibly serialize model out
-    transformer_package_path = os.path.join(cache_dir, "exported_transformer.pt2")
+    transformer_package_path = os.path.join(
+        cache_dir, "exported_transformer.pt2" if is_timestep_distilled else "exported_dev_transformer.pt2"
+    )
     if serialize:
         # Apply export
         exported_transformer: torch.export.ExportedProgram = torch.export.export(
@@ -305,7 +307,9 @@ def use_export_aoti(pipeline, cache_dir, serialize=False, is_timestep_distilled=
     vae_decode_kwargs = {"return_dict": False}
 
     # Possibly serialize model out
-    decoder_package_path = os.path.join(cache_dir, "exported_decoder.pt2")
+    decoder_package_path = os.path.join(
+        cache_dir, "exported_decoder.pt2" if is_timestep_distilled else "exported_dev_decoder.pt2"
+    )
     if serialize:
         # Apply export
         exported_decoder: torch.export.ExportedProgram = torch.export.export(

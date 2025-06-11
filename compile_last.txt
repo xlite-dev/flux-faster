@@ -1,0 +1,8 @@
+Loading pipeline components...:   0%|          | 0/7 [00:00<?, ?it/s]You set `add_prefix_space`. The tokenizer needs to be converted from the slow tokenizers
+Loading pipeline components...:  29%|██▊       | 2/7 [00:00<00:00,  9.52it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s][ALoading checkpoint shards: 100%|██████████| 3/3 [00:00<00:00, 51.82it/s]
+Loading pipeline components...:  71%|███████▏  | 5/7 [00:00<00:00, 13.99it/s]
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s][ALoading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 65.67it/s]
+Loading pipeline components...: 100%|██████████| 7/7 [00:00<00:00, 15.05it/s]
+time mean/var: tensor([4.3879, 4.3965, 4.3994, 4.3941, 4.3931, 4.3900, 4.3813, 4.3718, 4.3671,
+        4.3671]) 4.384819507598877 0.00015030684880912304
