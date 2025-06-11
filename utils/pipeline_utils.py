@@ -3,7 +3,7 @@ import pathlib
 import torch
 import torch.nn.functional as F
 from diffusers import FluxPipeline
-from torch._inductor.package import load_package
+from torch._inductor.package import load_package as inductor_load_package
 from typing import List, Optional, Tuple
 
 
@@ -233,6 +233,14 @@ def download_hosted_file(filename, output_path):
     hf_hub_download(REPO_NAME, filename, local_dir=os.path.dirname(output_path))
 
 
+def load_package(package_path):
+    if not os.path.exists(package_path):
+        download_hosted_file(os.path.basename(package_path), package_path)
+
+    loaded_package = inductor_load_package(package_path, run_single_threaded=True)
+    return loaded_package
+
+
 def use_export_aoti(pipeline, cache_dir, serialize=False, is_timestep_distilled=True):
     # create cache dir if needed
     pathlib.Path(cache_dir).mkdir(parents=True, exist_ok=True)
@@ -270,12 +278,7 @@ def use_export_aoti(pipeline, cache_dir, serialize=False, is_timestep_distilled=
             inductor_configs={"max_autotune": True, "triton.cudagraphs": True},
         )
     # download serialized model if needed
-    if not os.path.exists(transformer_package_path):
-        download_hosted_file(os.path.basename(transformer_package_path), transformer_package_path)
-
-    loaded_transformer = load_package(
-        transformer_package_path, run_single_threaded=True
-    )
+    loaded_transformer = load_package(transformer_package_path)
 
     # warmup before cudagraphing
     with torch.no_grad():
@@ -310,10 +313,7 @@ def use_export_aoti(pipeline, cache_dir, serialize=False, is_timestep_distilled=
             inductor_configs={"max_autotune": True, "triton.cudagraphs": True},
         )
     # download serialized model if needed
-    if not os.path.exists(decoder_package_path):
-        download_hosted_file(os.path.basename(decoder_package_path), decoder_package_path)
-
-    loaded_decoder = load_package(decoder_package_path, run_single_threaded=True)
+    loaded_decoder = load_package(decoder_package_path)
 
     # warmup before cudagraphing
     with torch.no_grad():
@@ -334,7 +334,7 @@ def use_export_aoti(pipeline, cache_dir, serialize=False, is_timestep_distilled=
 
 
 def optimize(pipeline, args):
-    is_timestep_distilled = args.ckpt == "black-forest-labs/FLUX.1-schnell"
+    is_timestep_distilled = not pipeline.transformer.config.guidance_embeds
 
     # fuse QKV projections in Transformer and VAE
     if not args.disable_fused_projections:

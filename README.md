@@ -37,6 +37,38 @@ To install flash attention v3, follow the instructions in https://github.com/Dao
 
 For hardware, we used a 96GB 700W H100 GPU. Some of the optimizations applied (BFloat16, torch.compile, Combining q,k,v projections, dynamic float8 quantization) are available on CPU as well.
 
+## Run the optimized pipeline
+
+```sh
+python optimized_flux_inference.py
+```
+
+This will use Flux Schnell and will also use the AOT serialized binaries. If the binaries don't exist, they will be
+automatically downloaded from [here](https://hf.co/jbschlosser/flux-fast).
+
+Usage:
+
+```usage: optimized_flux_inference.py [-h] [--cache_dir CACHE_DIR] [--ckpt CKPT] [--prompt PROMPT]
+                                   [--num_inference_steps NUM_INFERENCE_STEPS] [--guidance_scale GUIDANCE_SCALE] [--seed SEED]
+                                   [--output_file OUTPUT_FILE]
+
+options:
+  -h, --help            show this help message and exit
+  --cache_dir CACHE_DIR
+                        Directory where we should expect to fine the AOT exported artifacts as well as the model params.
+  --ckpt CKPT
+  --prompt PROMPT
+  --num_inference_steps NUM_INFERENCE_STEPS
+  --guidance_scale GUIDANCE_SCALE
+                        Ignored when using Schnell.
+  --seed SEED
+  --output_file OUTPUT_FILE
+                        Output image file path
+```
+
+> [!IMPORTANT]
+> The binaries won't work for hardware that are different from the ones they were obtained on. For example, if the binaries were obtained on an H100, they won't work on A100.
+
 ## Benchmarking
 [`run_benchmark.py`](./run_benchmark.py) is the main script for benchmarking the different optimization techniques.
 Usage:
