@@ -18,6 +18,17 @@ Summary of the optimizations:
     * `coordinate_descent_check_all_directions = True`
 * `torch.export` + Ahead-of-time Inductor (AOTI) + CUDAGraphs
 
+All of the above optimizations are lossless (outside of minor numerical differences sometimes
+introduced through the use of `torch.compile` / `torch.export`) EXCEPT FOR dynamic float8 quantization.
+Disable quantization if you want the same quality results as the baseline while still being
+quite a bit faster.
+
+**Example baseline output:**
+![baseline_output](https://github.com/user-attachments/assets/8ba746d2-fbf3-4e30-adc4-11303231c146)
+
+**Example fully-optimized output (with quantization):**
+![fast_output](https://github.com/user-attachments/assets/1a31dec4-38d5-45b2-8ae6-c7fb2e6413a4)
+
 ## Setup
 We rely primarily on pure PyTorch for the optimizations. Currently, a relatively recent nightly version of PyTorch is required.
 The numbers reported here were gathered using:
