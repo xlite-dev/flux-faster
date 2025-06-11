@@ -3,8 +3,9 @@ import pathlib
 import torch
 import torch.nn.functional as F
 from diffusers import FluxPipeline
-from torch._inductor.package import load_package
+from torch._inductor.package import load_package as inductor_load_package
 from typing import List, Optional, Tuple
+import inspect
 
 
 @torch.library.custom_op("flash::flash_attn_func", mutates_args=())
@@ -36,23 +37,28 @@ def flash_attn_func(
     import flash_attn_interface
 
     dtype = torch.float8_e4m3fn
+    
+    sig = inspect.signature(flash_attn_interface.flash_attn_func)
+    accepted = set(sig.parameters)
+    all_kwargs = {
+        "softmax_scale": softmax_scale,
+        "causal": causal,
+        "qv": qv,
+        "q_descale": q_descale,
+        "k_descale": k_descale,
+        "v_descale": v_descale,
+        "window_size": window_size,
+        "sink_token_length": sink_token_length,
+        "softcap": softcap,
+        "num_splits": num_splits,
+        "pack_gqa": pack_gqa,
+        "deterministic": deterministic,
+        "sm_margin": sm_margin,
+    }
+    kwargs = {k: v for k, v in all_kwargs.items() if k in accepted}
+    
     outputs = flash_attn_interface.flash_attn_func(
-        q.to(dtype),
-        k.to(dtype),
-        v.to(dtype),
-        softmax_scale=softmax_scale,
-        causal=causal,
-        qv=qv,
-        q_descale=q_descale,
-        k_descale=k_descale,
-        v_descale=v_descale,
-        window_size=window_size,
-        sink_token_length=sink_token_length,
-        softcap=softcap,
-        num_splits=num_splits,
-        pack_gqa=pack_gqa,
-        deterministic=deterministic,
-        sm_margin=sm_margin,
+        q.to(dtype), k.to(dtype), v.to(dtype), **kwargs,
     )
     return outputs[0]
 
@@ -214,7 +220,7 @@ def use_compile(pipeline):
         pipeline.vae.decode, mode="max-autotune", fullgraph=True
     )
 
-    # warmup for a few iterations
+    # warmup for a few iterations (`num_inference_steps` shouldn't matter)
     for _ in range(3):
         pipeline(
             "dummy prompt to trigger torch compilation",
@@ -233,7 +239,15 @@ def download_hosted_file(filename, output_path):
     hf_hub_download(REPO_NAME, filename, local_dir=os.path.dirname(output_path))
 
 
-def use_export_aoti(pipeline, cache_dir, serialize=False):
+def load_package(package_path):
+    if not os.path.exists(package_path):
+        download_hosted_file(os.path.basename(package_path), package_path)
+
+    loaded_package = inductor_load_package(package_path, run_single_threaded=True)
+    return loaded_package
+
+
+def use_export_aoti(pipeline, cache_dir, serialize=False, is_timestep_distilled=True):
     # create cache dir if needed
     pathlib.Path(cache_dir).mkdir(parents=True, exist_ok=True)
 
@@ -241,20 +255,24 @@ def use_export_aoti(pipeline, cache_dir, serialize=False):
         return torch.randn(*shape, device="cuda", dtype=torch.bfloat16)
 
     # === Transformer compile / export ===
+    seq_length = 256 if is_timestep_distilled else 512
+    # these shapes are for 1024x1024 resolution.
     transformer_kwargs = {
         "hidden_states": _example_tensor(1, 4096, 64),
         "timestep": torch.tensor([1.], device="cuda", dtype=torch.bfloat16),
-        "guidance": None,
+        "guidance": None if is_timestep_distilled else torch.tensor([1.], device="cuda", dtype=torch.bfloat16),
         "pooled_projections": _example_tensor(1, 768),
-        "encoder_hidden_states": _example_tensor(1, 512, 4096),
-        "txt_ids": _example_tensor(512, 3),
+        "encoder_hidden_states": _example_tensor(1, seq_length, 4096),
+        "txt_ids": _example_tensor(seq_length, 3),
         "img_ids": _example_tensor(4096, 3),
         "joint_attention_kwargs": {},
         "return_dict": False,
     }
 
     # Possibly serialize model out
-    transformer_package_path = os.path.join(cache_dir, "exported_transformer.pt2")
+    transformer_package_path = os.path.join(
+        cache_dir, "exported_transformer.pt2" if is_timestep_distilled else "exported_dev_transformer.pt2"
+    )
     if serialize:
         # Apply export
         exported_transformer: torch.export.ExportedProgram = torch.export.export(
@@ -268,12 +286,7 @@ def use_export_aoti(pipeline, cache_dir, serialize=False):
             inductor_configs={"max_autotune": True, "triton.cudagraphs": True},
         )
     # download serialized model if needed
-    if not os.path.exists(transformer_package_path):
-        download_hosted_file(os.path.basename(transformer_package_path), transformer_package_path)
-
-    loaded_transformer = load_package(
-        transformer_package_path, run_single_threaded=True
-    )
+    loaded_transformer = load_package(transformer_package_path)
 
     # warmup before cudagraphing
     with torch.no_grad():
@@ -291,12 +304,12 @@ def use_export_aoti(pipeline, cache_dir, serialize=False):
     # hack to get around export's limitations
     pipeline.vae.forward = pipeline.vae.decode
 
-    vae_decode_kwargs = {
-        "return_dict": False,
-    }
+    vae_decode_kwargs = {"return_dict": False}
 
     # Possibly serialize model out
-    decoder_package_path = os.path.join(cache_dir, "exported_decoder.pt2")
+    decoder_package_path = os.path.join(
+        cache_dir, "exported_decoder.pt2" if is_timestep_distilled else "exported_dev_decoder.pt2"
+    )
     if serialize:
         # Apply export
         exported_decoder: torch.export.ExportedProgram = torch.export.export(
@@ -310,10 +323,7 @@ def use_export_aoti(pipeline, cache_dir, serialize=False):
             inductor_configs={"max_autotune": True, "triton.cudagraphs": True},
         )
     # download serialized model if needed
-    if not os.path.exists(decoder_package_path):
-        download_hosted_file(os.path.basename(decoder_package_path), decoder_package_path)
-
-    loaded_decoder = load_package(decoder_package_path, run_single_threaded=True)
+    loaded_decoder = load_package(decoder_package_path)
 
     # warmup before cudagraphing
     with torch.no_grad():
@@ -334,7 +344,7 @@ def use_export_aoti(pipeline, cache_dir, serialize=False):
 
 
 def optimize(pipeline, args):
-    pipeline.set_progress_bar_config(disable=True)
+    is_timestep_distilled = not pipeline.transformer.config.guidance_embeds
 
     # fuse QKV projections in Transformer and VAE
     if not args.disable_fused_projections:
@@ -375,10 +385,12 @@ def optimize(pipeline, args):
     if args.compile_export_mode == "compile":
         pipeline = use_compile(pipeline)
     elif args.compile_export_mode == "export_aoti":
+        # NB: Using a cached export + AOTI model is not supported yet
         pipeline = use_export_aoti(
-            pipeline,
-            cache_dir=args.cache_dir,
-            serialize=(not args.use_cached_model),
+            pipeline, 
+            cache_dir=args.cache_dir, 
+            serialize=(not args.use_cached_model), 
+            is_timestep_distilled=is_timestep_distilled
         )
     elif args.compile_export_mode == "disabled":
         pass
@@ -393,5 +405,6 @@ def optimize(pipeline, args):
 def load_pipeline(args):
     load_dtype = torch.float32 if args.disable_bf16 else torch.bfloat16
     pipeline = FluxPipeline.from_pretrained(args.ckpt, torch_dtype=load_dtype).to(args.device)
+    pipeline.set_progress_bar_config(disable=True)
     pipeline = optimize(pipeline, args)
     return pipeline

@@ -25,11 +25,11 @@ quite a bit faster.
 
 Here are some example outputs for prompt `"A cat playing with a ball of yarn"`:
 
-**Baseline:**
-![baseline_output](https://github.com/user-attachments/assets/8ba746d2-fbf3-4e30-adc4-11303231c146)
+| Configuration                              | Output                                                                                                                                             |
+|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Baseline**                              | ![baseline_output](https://github.com/user-attachments/assets/8ba746d2-fbf3-4e30-adc4-11303231c146)                                                 |
+| **Fully-optimized (with quantization)**   | ![fast_output](https://github.com/user-attachments/assets/1a31dec4-38d5-45b2-8ae6-c7fb2e6413a4)                                                     |
 
-**Fully-optimized (with quantization):**
-![fast_output](https://github.com/user-attachments/assets/1a31dec4-38d5-45b2-8ae6-c7fb2e6413a4)
 
 ## Setup
 We rely primarily on pure PyTorch for the optimizations. Currently, a relatively recent nightly version of PyTorch is required.
@@ -49,6 +49,13 @@ pip install diffusers==0.33.1
 To install flash attention v3, follow the instructions in https://github.com/Dao-AILab/flash-attention#flashattention-3-beta-release.
 
 For hardware, we used a 96GB 700W H100 GPU. Some of the optimizations applied (BFloat16, torch.compile, Combining q,k,v projections, dynamic float8 quantization) are available on CPU as well.
+
+## Run the optimized pipeline
+
+TODO
+
+> [!IMPORTANT]
+> The binaries won't work for hardware that are different from the ones they were obtained on. For example, if the binaries were obtained on an H100, they won't work on A100.
 
 ## Benchmarking
 [`run_benchmark.py`](./run_benchmark.py) is the main script for benchmarking the different optimization techniques.
