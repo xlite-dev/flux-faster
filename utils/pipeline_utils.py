@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from diffusers import FluxPipeline
 from torch._inductor.package import load_package as inductor_load_package
 from typing import List, Optional, Tuple
+import inspect
 
 
 @torch.library.custom_op("flash::flash_attn_func", mutates_args=())
@@ -36,23 +37,28 @@ def flash_attn_func(
     import flash_attn_interface
 
     dtype = torch.float8_e4m3fn
+    
+    sig = inspect.signature(flash_attn_interface.flash_attn_func)
+    accepted = set(sig.parameters)
+    all_kwargs = {
+        "softmax_scale": softmax_scale,
+        "causal": causal,
+        "qv": qv,
+        "q_descale": q_descale,
+        "k_descale": k_descale,
+        "v_descale": v_descale,
+        "window_size": window_size,
+        "sink_token_length": sink_token_length,
+        "softcap": softcap,
+        "num_splits": num_splits,
+        "pack_gqa": pack_gqa,
+        "deterministic": deterministic,
+        "sm_margin": sm_margin,
+    }
+    kwargs = {k: v for k, v in all_kwargs.items() if k in accepted}
+    
     outputs = flash_attn_interface.flash_attn_func(
-        q.to(dtype),
-        k.to(dtype),
-        v.to(dtype),
-        softmax_scale=softmax_scale,
-        causal=causal,
-        qv=qv,
-        q_descale=q_descale,
-        k_descale=k_descale,
-        v_descale=v_descale,
-        window_size=window_size,
-        sink_token_length=sink_token_length,
-        softcap=softcap,
-        num_splits=num_splits,
-        pack_gqa=pack_gqa,
-        deterministic=deterministic,
-        sm_margin=sm_margin,
+        q.to(dtype), k.to(dtype), v.to(dtype), **kwargs,
     )
     return outputs[0]
 
