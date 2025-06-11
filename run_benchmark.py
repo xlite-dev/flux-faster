@@ -6,8 +6,15 @@ from utils.benchmark_utils import annotate, create_parser
 from utils.pipeline_utils import load_pipeline  # noqa: E402
 
 
+def set_rand_seeds(seed):
+    random.seed(seed)
+    torch.manual_seed(seed)
+
+
 def main(args):
+    set_rand_seeds(args.seed)
     pipeline = load_pipeline(args)
+    set_rand_seeds(args.seed)
 
     # warmup
     for _ in range(3):
@@ -52,10 +59,6 @@ def main(args):
 
 
 if __name__ == "__main__":
-    seed = 42
-    random.seed(seed)
-    torch.manual_seed(seed)
-
     parser = create_parser()
     args = parser.parse_args()
     main(args)
