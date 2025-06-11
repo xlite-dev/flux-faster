@@ -37,7 +37,7 @@ def flash_attn_func(
     import flash_attn_interface
 
     dtype = torch.float8_e4m3fn
-    
+
     sig = inspect.signature(flash_attn_interface.flash_attn_func)
     accepted = set(sig.parameters)
     all_kwargs = {
@@ -56,7 +56,7 @@ def flash_attn_func(
         "sm_margin": sm_margin,
     }
     kwargs = {k: v for k, v in all_kwargs.items() if k in accepted}
-    
+
     outputs = flash_attn_interface.flash_attn_func(
         q.to(dtype), k.to(dtype), v.to(dtype), **kwargs,
     )
@@ -385,11 +385,10 @@ def optimize(pipeline, args):
     if args.compile_export_mode == "compile":
         pipeline = use_compile(pipeline)
     elif args.compile_export_mode == "export_aoti":
-        # NB: Using a cached export + AOTI model is not supported yet
         pipeline = use_export_aoti(
-            pipeline, 
-            cache_dir=args.cache_dir, 
-            serialize=(not args.use_cached_model), 
+            pipeline,
+            cache_dir=args.cache_dir,
+            serialize=(not args.use_cached_model),
             is_timestep_distilled=is_timestep_distilled
         )
     elif args.compile_export_mode == "disabled":
