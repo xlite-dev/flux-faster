@@ -15,12 +15,16 @@ def create_parser():
                         help="Text prompt")
     parser.add_argument("--cache-dir", type=str, default=os.path.expandvars("$HOME/.cache/flux-fast"),
                         help="Cache directory for storing exported models")
+    parser.add_argument("--use-cached-model", action="store_true",
+                        help="Attempt to use cached model only (don't re-export)")
     parser.add_argument("--device", type=str, choices=["cuda", "cpu"], default="cuda",
                         help="Device to use")
     parser.add_argument("--num_inference_steps", type=int, default=4,
                         help="Number of denoising steps")
     parser.add_argument("--output-file", type=str, default="output.png",
                         help="Output image file path")
+    parser.add_argument("--seed", type=int, default=42,
+                        help="Random seed to use")
     # file path for optional output PyTorch Profiler trace
     parser.add_argument("--trace-file", type=str, default=None,
                         help="Output PyTorch Profiler trace file path")

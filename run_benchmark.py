@@ -12,8 +12,15 @@ def _determine_pipe_call_kwargs(args):
         kwargs = {"max_sequence_length": 512, "guidance_scale": 3.5}
     return kwargs
 
+def set_rand_seeds(seed):
+    random.seed(seed)
+    torch.manual_seed(seed)
+
+
 def main(args):
+    set_rand_seeds(args.seed)
     pipeline = load_pipeline(args)
+    set_rand_seeds(args.seed)
 
     # warmup
     for _ in range(3):
@@ -66,10 +73,6 @@ def main(args):
 
 
 if __name__ == "__main__":
-    seed = 42
-    random.seed(seed)
-    torch.manual_seed(seed)
-
     parser = create_parser()
     args = parser.parse_args()
     main(args)

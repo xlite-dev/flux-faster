@@ -387,7 +387,10 @@ def optimize(pipeline, args):
     elif args.compile_export_mode == "export_aoti":
         # NB: Using a cached export + AOTI model is not supported yet
         pipeline = use_export_aoti(
-            pipeline, cache_dir=args.cache_dir, serialize=True, is_timestep_distilled=is_timestep_distilled
+            pipeline, 
+            cache_dir=args.cache_dir, 
+            serialize=(not args.use_cached_model), 
+            is_timestep_distilled=is_timestep_distilled
         )
     elif args.compile_export_mode == "disabled":
         pass
