@@ -24,6 +24,4 @@ def main(args):
 if __name__ == "__main__":
     parser = create_parser()
     args = parser.parse_args()
-    # use the cached model to minimize latency
-    args.use_cached_model = True
     main(args)
