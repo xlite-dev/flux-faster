@@ -5,6 +5,12 @@ from torch.profiler import profile, record_function, ProfilerActivity
 from utils.benchmark_utils import annotate, create_parser
 from utils.pipeline_utils import load_pipeline  # noqa: E402
 
+def _determine_pipe_call_kwargs(args):
+    kwargs = {"max_sequence_length": 256, "guidance_scale": 0.0}
+    ckpt_id = args.ckpt
+    if ckpt_id == "black-forest-labs/FLUX.1-dev":
+        kwargs = {"max_sequence_length": 512, "guidance_scale": 3.5}
+    return kwargs
 
 def main(args):
     pipeline = load_pipeline(args)
@@ -12,7 +18,10 @@ def main(args):
     # warmup
     for _ in range(3):
         image = pipeline(
-            args.prompt, num_inference_steps=args.num_inference_steps, guidance_scale=0.0
+            args.prompt, 
+            num_inference_steps=args.num_inference_steps, 
+            generator=torch.manual_seed(0),
+            **_determine_pipe_call_kwargs(args)
         ).images[0]
 
     # run inference 10 times and compute mean / variance
@@ -20,7 +29,10 @@ def main(args):
     for _ in range(10):
         begin = time.time()
         image = pipeline(
-            args.prompt, num_inference_steps=args.num_inference_steps, guidance_scale=0.0
+            args.prompt, 
+            num_inference_steps=args.num_inference_steps, 
+            generator=torch.manual_seed(0),
+            **_determine_pipe_call_kwargs(args)
         ).images[0]
         end = time.time()
         timings.append(end - begin)
@@ -46,7 +58,9 @@ def main(args):
         with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True) as prof:
             with record_function("timed_region"):
                 image = pipeline(
-                    args.prompt, num_inference_steps=args.num_inference_steps, guidance_scale=0.0
+                    args.prompt, 
+                    num_inference_steps=args.num_inference_steps, 
+                    **_determine_pipe_call_kwargs(args)
                 ).images[0]
         prof.export_chrome_trace(args.trace_file)
 

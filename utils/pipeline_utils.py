@@ -214,7 +214,7 @@ def use_compile(pipeline):
         pipeline.vae.decode, mode="max-autotune", fullgraph=True
     )
 
-    # warmup for a few iterations
+    # warmup for a few iterations (`num_inference_steps` shouldn't matter)
     for _ in range(3):
         pipeline(
             "dummy prompt to trigger torch compilation",
@@ -233,7 +233,7 @@ def download_hosted_file(filename, output_path):
     hf_hub_download(REPO_NAME, filename, local_dir=os.path.dirname(output_path))
 
 
-def use_export_aoti(pipeline, cache_dir, serialize=False):
+def use_export_aoti(pipeline, cache_dir, serialize=False, is_timestep_distilled=True):
     # create cache dir if needed
     pathlib.Path(cache_dir).mkdir(parents=True, exist_ok=True)
 
@@ -241,13 +241,15 @@ def use_export_aoti(pipeline, cache_dir, serialize=False):
         return torch.randn(*shape, device="cuda", dtype=torch.bfloat16)
 
     # === Transformer compile / export ===
+    seq_length = 256 if is_timestep_distilled else 512
+    # these shapes are for 1024x1024 resolution.
     transformer_kwargs = {
         "hidden_states": _example_tensor(1, 4096, 64),
         "timestep": torch.tensor([1.], device="cuda", dtype=torch.bfloat16),
-        "guidance": None,
+        "guidance": None if is_timestep_distilled else torch.tensor([1.], device="cuda", dtype=torch.bfloat16),
         "pooled_projections": _example_tensor(1, 768),
-        "encoder_hidden_states": _example_tensor(1, 512, 4096),
-        "txt_ids": _example_tensor(512, 3),
+        "encoder_hidden_states": _example_tensor(1, seq_length, 4096),
+        "txt_ids": _example_tensor(seq_length, 3),
         "img_ids": _example_tensor(4096, 3),
         "joint_attention_kwargs": {},
         "return_dict": False,
@@ -291,9 +293,7 @@ def use_export_aoti(pipeline, cache_dir, serialize=False):
     # hack to get around export's limitations
     pipeline.vae.forward = pipeline.vae.decode
 
-    vae_decode_kwargs = {
-        "return_dict": False,
-    }
+    vae_decode_kwargs = {"return_dict": False}
 
     # Possibly serialize model out
     decoder_package_path = os.path.join(cache_dir, "exported_decoder.pt2")
@@ -334,7 +334,7 @@ def use_export_aoti(pipeline, cache_dir, serialize=False):
 
 
 def optimize(pipeline, args):
-    pipeline.set_progress_bar_config(disable=True)
+    is_timestep_distilled = args.ckpt == "black-forest-labs/FLUX.1-schnell"
 
     # fuse QKV projections in Transformer and VAE
     if not args.disable_fused_projections:
@@ -376,7 +376,9 @@ def optimize(pipeline, args):
         pipeline = use_compile(pipeline)
     elif args.compile_export_mode == "export_aoti":
         # NB: Using a cached export + AOTI model is not supported yet
-        pipeline = use_export_aoti(pipeline, cache_dir=args.cache_dir, serialize=True)
+        pipeline = use_export_aoti(
+            pipeline, cache_dir=args.cache_dir, serialize=True, is_timestep_distilled=is_timestep_distilled
+        )
     elif args.compile_export_mode == "disabled":
         pass
     else:
@@ -390,5 +392,6 @@ def optimize(pipeline, args):
 def load_pipeline(args):
     load_dtype = torch.float32 if args.disable_bf16 else torch.bfloat16
     pipeline = FluxPipeline.from_pretrained(args.ckpt, torch_dtype=load_dtype).to(args.device)
+    pipeline.set_progress_bar_config(disable=True)
     pipeline = optimize(pipeline, args)
     return pipeline
