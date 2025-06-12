@@ -33,14 +33,16 @@ Here are some example outputs for prompt `"A cat playing with a ball of yarn"`:
 
 ## Setup
 We rely primarily on pure PyTorch for the optimizations. Currently, a relatively recent nightly version of PyTorch is required.
+
 The numbers reported here were gathered using:
 * `torch==2.8.0.dev20250605+cu126` - note that we rely on some fixes since 2.7
 * `torchao==0.12.0.dev20250610+cu126` - note that we rely on a fix in the 06/10 nightly
-* `diffusers==0.33.1`
+* `diffusers` - with [this fix](https://github.com/huggingface/diffusers/pull/11696) included
 * `flash_attn_3==3.0.0b1`
 
 To install deps:
 ```
+pip uninstall diffusers -y && pip install git+https://github.com/huggingface/diffusers@b272807bc898a314cde536c1d7d1e43592af1fce
 pip install --pre torch==2.8.0.dev20250605+cu126 --index-url https://download.pytorch.org/whl/nightly/cu126
 pip install --pre torchao==0.12.0.dev20250609+cu126 --index-url https://download.pytorch.org/whl/nightly/cu126
 pip install diffusers==0.33.1
@@ -52,21 +54,10 @@ For hardware, we used a 96GB 700W H100 GPU. Some of the optimizations applied (B
 
 ## Run the optimized pipeline
 
-```
-python gen_image.py --prompt "An astronaut standing next to a giant lemon" --output-file output.png --use-cached-model
-```
-
-This will include all optimizations and will attempt to use pre-cached binary models
-generated via `torch.export` + AOTI. To generate these binaries for subsequent runs, run
-the above command without the `--use-cached-model` flag.
+TODO
 
 > [!IMPORTANT]
-> The binaries won't work for hardware that is sufficiently different from the hardware they were
-> obtained on. For example, if the binaries were obtained on an H100, they won't work on A100.
-> Further, the binaries are currently Linux-only and include dependencies on specific versions
-> of system libs such as libstdc++; they will not work if they were generated in a sufficiently
-> different environment than the one present at runtime. The PyTorch Compiler team is working on
-> solutions for more portable binaries / artifact caching.
+> The binaries won't work for hardware that are different from the ones they were obtained on. For example, if the binaries were obtained on an H100, they won't work on A100.
 
 ## Benchmarking
 [`run_benchmark.py`](./run_benchmark.py) is the main script for benchmarking the different optimization techniques.
