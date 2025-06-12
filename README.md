@@ -1,8 +1,10 @@
 # flux-fast
 Making Flux go brrr on GPUs.
 
-## Results (FLUX.1-schnell)
-![flux_result_plot](https://github.com/user-attachments/assets/82538b51-5446-4ee5-a8bb-a2fdec61123a)
+## Results
+![new_flux_schnell_plot](https://github.com/user-attachments/assets/3f18d621-bdcd-423d-a66c-fd34bbd90f27)
+
+![flux_dev_result_plot](https://github.com/user-attachments/assets/48945137-c826-497a-a292-b1f976a5b16a)
 
 Summary of the optimizations:
 * Running with the bfloat16 precision
