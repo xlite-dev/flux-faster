@@ -25,22 +25,37 @@ quite a bit faster.
 
 Here are some example outputs for prompt `"A cat playing with a ball of yarn"`:
 
-| Configuration                              | Output                                                                                                                                             |
-|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Baseline**                              | ![baseline_output](https://github.com/user-attachments/assets/8ba746d2-fbf3-4e30-adc4-11303231c146)                                                 |
-| **Fully-optimized (with quantization)**   | ![fast_output](https://github.com/user-attachments/assets/1a31dec4-38d5-45b2-8ae6-c7fb2e6413a4)                                                     |
-
+<table>
+  <thead>
+    <tr>
+      <th>Configuration</th>
+      <th>Output</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Baseline</strong></td>
+      <td><img src="https://github.com/user-attachments/assets/8ba746d2-fbf3-4e30-adc4-11303231c146" alt="baseline_output" width=400/></td>
+    </tr>
+    <tr>
+      <td><strong>Fully-optimized (with quantization)</strong></td>
+      <td><img src="https://github.com/user-attachments/assets/1a31dec4-38d5-45b2-8ae6-c7fb2e6413a4" alt="fast_output" width=400/></td>
+    </tr>
+  </tbody>
+</table>
 
 ## Setup
 We rely primarily on pure PyTorch for the optimizations. Currently, a relatively recent nightly version of PyTorch is required.
+
 The numbers reported here were gathered using:
 * `torch==2.8.0.dev20250605+cu126` - note that we rely on some fixes since 2.7
 * `torchao==0.12.0.dev20250610+cu126` - note that we rely on a fix in the 06/10 nightly
-* `diffusers==0.33.1`
+* `diffusers` - with [this fix](https://github.com/huggingface/diffusers/pull/11696) included
 * `flash_attn_3==3.0.0b1`
 
 To install deps:
 ```
+pip uninstall diffusers -y && pip install git+https://github.com/huggingface/diffusers@b272807bc898a314cde536c1d7d1e43592af1fce
 pip install --pre torch==2.8.0.dev20250605+cu126 --index-url https://download.pytorch.org/whl/nightly/cu126
 pip install --pre torchao==0.12.0.dev20250609+cu126 --index-url https://download.pytorch.org/whl/nightly/cu126
 pip install diffusers==0.33.1
@@ -52,7 +67,7 @@ For hardware, we used a 96GB 700W H100 GPU. Some of the optimizations applied (B
 
 ## Run the optimized pipeline
 
-```
+```sh
 python gen_image.py --prompt "An astronaut standing next to a giant lemon" --output-file output.png --use-cached-model
 ```
 
