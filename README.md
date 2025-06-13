@@ -2,9 +2,26 @@
 Making Flux go brrr on GPUs.
 
 ## Results
-![new_flux_schnell_plot](https://github.com/user-attachments/assets/3f18d621-bdcd-423d-a66c-fd34bbd90f27)
 
-![flux_dev_result_plot](https://github.com/user-attachments/assets/48945137-c826-497a-a292-b1f976a5b16a)
+<table>
+  <thead>
+    <tr>
+      <th>Description</th>
+      <th>Image</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Flux.1-Schnell</td>
+      <td><img src="https://github.com/user-attachments/assets/3f18d621-bdcd-423d-a66c-fd34bbd90f27" width=500 alt="new_flux_schnell_plot" /></td>
+    </tr>
+    <tr>
+      <td>Flux.1-Dev</td>
+      <td><img src="https://github.com/user-attachments/assets/48945137-c826-497a-a292-b1f976a5b16a" width=500 alt="flux_dev_result_plot" /></td>
+    </tr>
+  </tbody>
+</table>
+
 
 Summary of the optimizations:
 * Running with the bfloat16 precision
@@ -25,7 +42,7 @@ introduced through the use of `torch.compile` / `torch.export`) EXCEPT FOR dynam
 Disable quantization if you want the same quality results as the baseline while still being
 quite a bit faster.
 
-Here are some example outputs for prompt `"A cat playing with a ball of yarn"`:
+Here are some example outputs with Flux.1-Schnell for prompt `"A cat playing with a ball of yarn"`:
 
 <table>
   <thead>
