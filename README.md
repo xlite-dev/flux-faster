@@ -1,5 +1,5 @@
 # flux-fast
-Making Flux go brrr on GPUs.
+Making Flux go brrr on GPUs. With simple recipes from this repo, we enabled ~2.5x speedup on Flux.1-Schnell and Flux.1-Dev using (mainly) pure PyTorch code and a beefy GPU like H100.
 
 ## Results
 
