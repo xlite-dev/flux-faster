@@ -10,6 +10,8 @@ def _determine_pipe_call_kwargs(args):
     ckpt_id = args.ckpt
     if ckpt_id == "black-forest-labs/FLUX.1-dev":
         kwargs = {"max_sequence_length": 512, "guidance_scale": 3.5}
+    elif ckpt_id == "black-forest-labs/FLUX.1-Kontext-dev":
+        kwargs = {"max_sequence_length": 512, "guidance_scale": 2.5}
     return kwargs
 
 def set_rand_seeds(seed):
@@ -27,7 +29,7 @@ def main(args):
         image = pipeline(
             args.prompt, 
             num_inference_steps=args.num_inference_steps, 
-            generator=torch.manual_seed(0),
+            generator=torch.manual_seed(args.seed),
             **_determine_pipe_call_kwargs(args)
         ).images[0]
 
@@ -38,7 +40,7 @@ def main(args):
         image = pipeline(
             args.prompt, 
             num_inference_steps=args.num_inference_steps, 
-            generator=torch.manual_seed(0),
+            generator=torch.manual_seed(args.seed),
             **_determine_pipe_call_kwargs(args)
         ).images[0]
         end = time.time()
