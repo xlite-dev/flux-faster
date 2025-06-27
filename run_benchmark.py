@@ -4,6 +4,8 @@ import torch
 from torch.profiler import profile, record_function, ProfilerActivity
 from utils.benchmark_utils import annotate, create_parser
 from utils.pipeline_utils import load_pipeline  # noqa: E402
+from diffusers.utils import load_image
+import os
 
 def _determine_pipe_call_kwargs(args):
     kwargs = {"max_sequence_length": 256, "guidance_scale": 0.0}
@@ -12,6 +14,7 @@ def _determine_pipe_call_kwargs(args):
         kwargs = {"max_sequence_length": 512, "guidance_scale": 3.5}
     elif ckpt_id == "black-forest-labs/FLUX.1-Kontext-dev":
         kwargs = {"max_sequence_length": 512, "guidance_scale": 2.5}
+        kwargs.update({"image": load_image(args.image)}) 
     return kwargs
 
 def set_rand_seeds(seed):
@@ -22,12 +25,14 @@ def set_rand_seeds(seed):
 def main(args):
     set_rand_seeds(args.seed)
     pipeline = load_pipeline(args)
+    if args.ckpt == "black-forest-labs/FLUX.1-Kontext-dev":
+        assert os.path.exists(args.image)
     set_rand_seeds(args.seed)
 
     # warmup
     for _ in range(3):
         image = pipeline(
-            args.prompt, 
+            prompt=args.prompt, 
             num_inference_steps=args.num_inference_steps, 
             generator=torch.manual_seed(args.seed),
             **_determine_pipe_call_kwargs(args)
@@ -38,7 +43,7 @@ def main(args):
     for _ in range(10):
         begin = time.time()
         image = pipeline(
-            args.prompt, 
+            prompt=args.prompt, 
             num_inference_steps=args.num_inference_steps, 
             generator=torch.manual_seed(args.seed),
             **_determine_pipe_call_kwargs(args)

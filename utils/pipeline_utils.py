@@ -1,7 +1,7 @@
 import os
 import pathlib
 import torch
-from diffusers import FluxPipeline, FluxKontextPipeline
+from diffusers import DiffusionPipeline
 from torch._inductor.package import load_package as inductor_load_package
 from typing import List, Optional
 from PIL import Image
@@ -410,7 +410,7 @@ def optimize(pipeline, args):
 
 def load_pipeline(args):
     load_dtype = torch.float32 if args.disable_bf16 else torch.bfloat16
-    pipeline = FluxPipeline.from_pretrained(args.ckpt, torch_dtype=load_dtype).to(args.device)
+    pipeline = DiffusionPipeline.from_pretrained(args.ckpt, torch_dtype=load_dtype).to(args.device)
     pipeline.set_progress_bar_config(disable=True)
     pipeline = optimize(pipeline, args)
     return pipeline
