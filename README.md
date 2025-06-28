@@ -192,11 +192,10 @@ Here are some example outputs for prompt `"Make Pikachu hold a sign that says 'B
 </table>
 
 <details>
-<summary><b>Notes<b></summary>
+<summary><b>Notes</b></summary>
 
 * You need to install `diffusers` with [this fix](https://github.com/huggingface/diffusers/pull/11818) included
 * You need to install `torchao` with [this fix](https://github.com/pytorch/ao/pull/2293) included
-* We specialized the optimizations for the 1024x1024 resolution.
 
 </details>
 
