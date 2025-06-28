@@ -168,7 +168,7 @@ We ran the exact same setup as above on [Flux.1 Kontext Dev](https://hf.co/black
 
 <div align="center">
 <img src="https://huggingface.co/datasets/sayakpaul/sample-datasets/resolve/main/flux_kontext_optims.png" width=500 alt="flux_kontext_plot"/>
-</div>
+</div><br>
 
 Here are some example outputs for prompt `"Make Pikachu hold a sign that says 'Black Forest Labs is awesome', yarn art style, detailed, vibrant colors"` and [this image](https://huggingface.co/datasets/huggingface/documentation-images/blob/main/diffusers/yarn-art-pikachu.png):
 
