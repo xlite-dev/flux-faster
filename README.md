@@ -22,7 +22,7 @@ pip3 install -U cache-dit # or: pip3 install git+https://github.com/vipshop/cach
 ## Important Notes
 
 1) Please add `--enable_cache_dit` flag to use cache-dit. cache-dit doesn't work with torch.export now. cache-dit extends Flux and introduces some Python dynamic operations, so it may not be possible to export the model using torch.export.
-2) Compiling the entire transformer appears to introduce precision loss in my tests on an NVIDIA L20 device (tested with PyTorch 2.7.1). Please try to compile transformer blocks only if you want to keep higer precision, see [cache-dit/bench.py](https://github.com/vipshop/cache-dit/blob/main/bench/bench.py#L253).
+2) Compiling the entire transformer appears to introduce precision loss in my tests on an NVIDIA L20 device (tested with PyTorch 2.7.1). Please try to add `--only_compile_transformer_blocks` flag to compile transformer blocks only if you want to keep higer precision.
 
 # flux-fast  
 Making Flux go brrr on GPUs. With simple recipes from this repo, we enabled ~2.5x speedup on Flux.1-Schnell and Flux.1-Dev using (mainly) pure PyTorch code and a beefy GPU like H100. This repo is NOT meant to be a library or an out-of-the-box solution. So, please fork the repo, hack into the code, and share your results 🤗
@@ -170,8 +170,10 @@ usage: run_benchmark.py [-h] [--ckpt CKPT] [--prompt PROMPT] [--cache-dir CACHE_
                         [--device {cuda,cpu}] [--num_inference_steps NUM_INFERENCE_STEPS]
                         [--output-file OUTPUT_FILE] [--trace-file TRACE_FILE] [--disable_bf16]
                         [--compile_export_mode {compile,export_aoti,disabled}]
+                        [--only_compile_transformer_blocks]
                         [--disable_fused_projections] [--disable_channels_last] [--disable_fa3]
-                        [--disable_quant] [--disable_inductor_tuning_flags] [--enable_cache_dit]
+                        [--disable_quant] [--disable_inductor_tuning_flags]
+                        [--enable_cache_dit]
 
 options:
   -h, --help            show this help message and exit
@@ -191,6 +193,8 @@ options:
   --compile_export_mode {compile,export_aoti,disabled}
                         Configures how torch.compile or torch.export + AOTI are used (default:
                         export_aoti)
+  --only_compile_transformer_blocks
+                        Only compile Transformer Blocks for higher precision (default: False)
   --disable_fused_projections
                         Disables fused q,k,v projections (default: False)
   --disable_channels_last
