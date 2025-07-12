@@ -7,7 +7,7 @@ CKPT="black-forest-labs/FLUX.1-dev"
 # bfloat16
 python run_benchmark.py \
     --ckpt ${CKPT} \
-    --trace-file bfloat16.json.gz \
+    --trace-file bf16.json.gz \
     --compile_export_mode disabled \
     --disable_fused_projections \
     --disable_channels_last \
