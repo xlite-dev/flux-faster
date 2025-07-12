@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# TODO: FA3, H100
 CKPT="black-forest-labs/FLUX.1-dev"
 
 # baseline
