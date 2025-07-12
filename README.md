@@ -2,21 +2,23 @@
 
 A forked version of [huggingface/flux-fast](https://github.com/huggingface/flux-fast) that **makes flux-fast even faster with [cache-dit](https://github.com/vipshop/cache-dit).**
 
-### Install cache-dit
-
 ```bash
 pip install -U cache-dit
 ```
-
-### Results
-
 |BF16|BF16 + cache-dit|BF16 + cache-dit + compile|
 |:---:|:---:|:---:|
 |Baseline (FLUX.1-dev 28 steps)|PSNR: 34.23|PSNR: 34.16|
 |L20: 24.94s|L20: 20.85s|L20: 17.39s|
-|![output](https://github.com/user-attachments/assets/4a9237c5-5736-483b-85f7-38ab6c417009)|![output_cache](https://github.com/user-attachments/assets/99b0abbc-3615-4e92-9b0f-c6c45ae6d24e)|![output_cache_compile](https://github.com/user-attachments/assets/f02243ed-4887-468d-874f-6e619af6d5cf)
+|![output](https://github.com/user-attachments/assets/4a9237c5-5736-483b-85f7-38ab6c417009)|![output_cache](https://github.com/user-attachments/assets/99b0abbc-3615-4e92-9b0f-c6c45ae6d24e)|![output_cache_compile](https://github.com/user-attachments/assets/f02243ed-4887-468d-874f-6e619af6d5cf)|  
+|BF16 + compile| BF16 + compile + qkv projection + channels_last + float8 quant + inductor flags |BF16 + compile + qkv projection + channels_last + float8 quant + inductor flags + **cache-dit**|
+|PSNR: 19.28|PSNR: 18.07|PSNR: 22.24|
+|L20: 20.24s|L20: 13.29s|L20: 11.21s|
+|![bf16_compile](https://github.com/user-attachments/assets/a4bef05b-272d-42f7-ba02-6855731e6138)|![bf16_compile_qkv_chan_quant_flags](https://github.com/user-attachments/assets/5dc236e0-d2b4-43d1-bc60-ca9af51fd611)|![bf16_cache_compile_qkv_chan_quant_flags](https://github.com/user-attachments/assets/b96874a7-0224-41d7-be24-3f8810f9a4d3)|
 
-Note: please add `--enable_cache_dit` flag to use cache-dit. cache-dit doesn't work with torch.export now. cache-dit extends Flux and introduces some Python dynamic operations, so it may not be possible to export the model using torch.export.
+## Important Notes
+
+1) Please add `--enable_cache_dit` flag to use cache-dit. cache-dit doesn't work with torch.export now. cache-dit extends Flux and introduces some Python dynamic operations, so it may not be possible to export the model using torch.export.
+2) Compiling the entire transformer appears to introduce precision loss in my tests on an NVIDIA L20 device (tested with PyTorch 2.7.1).
 
 # flux-fast  
 Making Flux go brrr on GPUs. With simple recipes from this repo, we enabled ~2.5x speedup on Flux.1-Schnell and Flux.1-Dev using (mainly) pure PyTorch code and a beefy GPU like H100. This repo is NOT meant to be a library or an out-of-the-box solution. So, please fork the repo, hack into the code, and share your results 🤗
