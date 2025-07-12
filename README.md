@@ -23,6 +23,8 @@ pip3 install -U cache-dit # or: pip3 install git+https://github.com/vipshop/cach
 |L20: 8.98s|L20: 7.41s |L20: 7.42s|  
 |![bf16_cache_F8B0W0M0_compile_qkv_chan_quant_flags_trn](https://github.com/user-attachments/assets/996f9dea-4fe3-4c1b-8f86-c956f175d3d9)|![bf16_cache_F1B0W0M0_compile_qkv_chan_quant_flags_trn](https://github.com/user-attachments/assets/90c05c57-73f8-4acd-851e-ba7e8993ced8)|![bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn](https://github.com/user-attachments/assets/aa7538b1-b0e8-4ea4-b9ca-0d32e946d5b8)|
 
+As you can see, under the configuration of `cache-dit + F1B0 + no warmup + TaylorSeer`, it only takes 7.42 seconds on NVIDIA L20, with a cumulative speedup of 3.36x (compared to the baseline of 24.94 seconds), while still maintaining high precision with a PSNR of 23.23.
+
 ## Important Notes
 
 1) Please add `--enable_cache_dit` flag to use cache-dit. cache-dit doesn't work with torch.export now. cache-dit extends Flux and introduces some Python dynamic operations, so it may not be possible to export the model using torch.export.
