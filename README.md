@@ -5,7 +5,7 @@ A forked version of [huggingface/flux-fast](https://github.com/huggingface/flux-
 ```bash
 pip3 install -U cache-dit # or: pip3 install git+https://github.com/vipshop/cache-dit.git
 ```
-|BF16|BF16 + cache-dit|BF16 + cache-dit + compile|
+|BF16|BF16 + **cache-dit + F12B12 + warmup 8 steps**|BF16 + **cache-dit + F12B12 + warmup 8 steps** + compile|
 |:---:|:---:|:---:|
 |Baseline (FLUX.1-dev 28 steps)|PSNR: 34.23|PSNR: 34.16|
 |L20: 24.94s|L20: 20.85s|L20: 17.39s|
