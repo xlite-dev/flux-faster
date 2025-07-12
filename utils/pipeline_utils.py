@@ -234,10 +234,19 @@ def cudagraph(f):
 def use_compile(pipeline):
     # Compile the compute-intensive portions of the model: denoising transformer / decoder
     is_kontext = "Kontext" in pipeline.__class__.__name__
+    # Compile transformer w/o fullgraph and cudagraphs if cache-dit is enabled.
+    # The cache-dit relies heavily on dynamic Python operations to maintain the cache_context, 
+    # so it is necessary to introduce graph breaks at appropriate positions to be compatible 
+    # with torch.compile. Thus, we compile the transformer with `max-autotune-no-cudagraphs` 
+    # mode if cache-dit is enabled. Otherwise, we compile with `max-autotune` mode.
+    is_cached = getattr(pipeline.transformer, "_is_cached", False)
     # For AMD MI300X w/ the AITER kernels, the default dynamic=None is not working as expected, giving black results.
     # Therefore, we use dynamic=True for AMD only. This leads to a small perf penalty, but should be fixed eventually. 
     pipeline.transformer = torch.compile(
-        pipeline.transformer, mode="max-autotune", fullgraph=True, dynamic=True if is_hip() else None
+        pipeline.transformer, 
+        mode="max-autotune" if not is_cached else "max-autotune-no-cudagraphs", 
+        fullgraph=(True if not is_cached else False), 
+        dynamic=True if is_hip() else None
     )
     pipeline.vae.decode = torch.compile(
         pipeline.vae.decode, mode="max-autotune", fullgraph=True, dynamic=True if is_hip() else None
@@ -387,6 +396,26 @@ def optimize(pipeline, args):
     # switch memory layout to channels_last
     if not args.disable_channels_last:
         pipeline.vae.to(memory_format=torch.channels_last)
+    
+    # cache-dit: DBCache F12B12
+    if args.enable_cache_dit:
+        try:
+            from cache_dit.cache_factory import apply_cache_on_pipe, CacheType
+            # docs: https://github.com/vipshop/cache-dit
+            cache_options = {
+                "cache_type": CacheType.DBCache,
+                "warmup_steps": 8,
+                "max_cached_steps": 8,
+                "Fn_compute_blocks": 12,
+                "Bn_compute_blocks": 12,
+                "residual_diff_threshold": 0.12,
+            }
+            apply_cache_on_pipe(pipeline, **cache_options)
+        except ImportError:
+            print(
+                "Please install cache-dit via 'pip install -U cache-dit'"
+            )
+            pass
 
     # apply float8 quantization
     if not args.disable_quant:
@@ -414,12 +443,18 @@ def optimize(pipeline, args):
     if args.compile_export_mode == "compile":
         pipeline = use_compile(pipeline)
     elif args.compile_export_mode == "export_aoti":
-        pipeline = use_export_aoti(
-            pipeline,
-            cache_dir=args.cache_dir,
-            serialize=(not args.use_cached_model),
-            is_timestep_distilled=is_timestep_distilled
-        )
+        if not args.enable_cache_dit:
+            pipeline = use_export_aoti(
+                pipeline,
+                cache_dir=args.cache_dir,
+                serialize=(not args.use_cached_model),
+                is_timestep_distilled=is_timestep_distilled
+            )
+        else:
+            print(
+                "Currently, 'cache-dit' is incompatible with 'export_aoti'. "
+                "Please disable 'cache-dit' and re-run the export process."
+            )
     elif args.compile_export_mode == "disabled":
         pass
     else:

@@ -44,6 +44,7 @@ Summary of the optimizations:
     * `coordinate_descent_tuning = True`
     * `coordinate_descent_check_all_directions = True`
 * `torch.export` + Ahead-of-time Inductor (AOTI) + CUDAGraphs
+* Cache Acceleration with `cache-dit: DBCache + F12B12`
 
 All of the above optimizations are lossless (outside of minor numerical differences sometimes
 introduced through the use of `torch.compile` / `torch.export`) EXCEPT FOR dynamic float8 quantization.
@@ -144,7 +145,7 @@ usage: run_benchmark.py [-h] [--ckpt CKPT] [--prompt PROMPT] [--cache-dir CACHE_
                         [--output-file OUTPUT_FILE] [--trace-file TRACE_FILE] [--disable_bf16]
                         [--compile_export_mode {compile,export_aoti,disabled}]
                         [--disable_fused_projections] [--disable_channels_last] [--disable_fa3]
-                        [--disable_quant] [--disable_inductor_tuning_flags]
+                        [--disable_quant] [--disable_inductor_tuning_flags] [--enable_cache_dit]
 
 options:
   -h, --help            show this help message and exit
@@ -172,6 +173,7 @@ options:
   --disable_quant       Disables usage of dynamic float8 quantization (default: False)
   --disable_inductor_tuning_flags
                         Disables use of inductor tuning flags (default: False)
+  --enable_cache_dit    Enables use of cache-dit: DBCache F12B12 (default: False)
 ```
 
 Note that all optimizations are on by default and each can be individually toggled. Example run:
@@ -665,5 +667,60 @@ pipeline = use_export_aoti(pipeline, cache_dir=args.cache_dir, serialize=False)
 prompt = "A cat playing with a ball of yarn"
 image = pipe(prompt, num_inference_steps=4).images[0]
 ```
+
+</details>
+
+
+<details>
+  <summary>Cache Acceleration with cache-dit: DBCache + F12B12</summary>
+
+You can use `cache-dit` to further speedup FLUX model, different configurations of compute blocks (F12B12, etc.) can be customized in cache-dit: DBCache. Please check [cache-dit](https://github.com/vipshop/cache-dit) for more details. For example:
+
+```python
+# Install: pip install -U cache-dit
+from diffusers import FluxPipeline
+from cache_dit.cache_factory import apply_cache_on_pipe, CacheType
+
+pipeline = FluxPipeline.from_pretrained(
+    "black-forest-labs/FLUX.1-dev",
+    torch_dtype=torch.bfloat16,
+).to("cuda")
+
+# cache-dit: DBCache F12B12
+cache_options = {
+    "cache_type": CacheType.DBCache,
+    "warmup_steps": 8,
+    "max_cached_steps": 8,    # -1 means no limit
+    "Fn_compute_blocks": 12,  # Fn, F12, etc.
+    "Bn_compute_blocks": 12,  # Bn, B12, etc.
+    "residual_diff_threshold": 0.12,
+}
+
+apply_cache_on_pipe(pipeline, **cache_options)
+```
+
+By the way, `cache-dit` is designed to work compatibly with torch.compile. You can easily use `cache-dit` with torch.compile to further achieve a better performance. For example:
+
+```python
+apply_cache_on_pipe(pipeline, **cache_options)
+
+# The cache-dit relies heavily on dynamic Python operations to maintain the cache_context, 
+# so it is necessary to introduce graph breaks at appropriate positions to be compatible 
+# with torch.compile. Thus, we compile the transformer with `max-autotune-no-cudagraphs` 
+# mode if cache-dit is enabled. Otherwise, we compile with `max-autotune` mode.
+pipeline.transformer = torch.compile(
+    pipeline.transformer, 
+    mode="max-autotune-no-cudagraphs", 
+    fullgraph=False, 
+)
+```
+
+
+|BF16|BF16 + cache-dit|BF16 + cache-dit + compile|
+|:---:|:---:|:---:|
+|Baseline (FLUX.1-dev 28 steps)|PSNR: 34.23|PSNR: 34.16|
+|L20: 24.94s|L20: 20.85s|L20: 17.39s|
+|![output](https://github.com/user-attachments/assets/4a9237c5-5736-483b-85f7-38ab6c417009)|![output_cache](https://github.com/user-attachments/assets/99b0abbc-3615-4e92-9b0f-c6c45ae6d24e)|![output_cache_compile](https://github.com/user-attachments/assets/f02243ed-4887-468d-874f-6e619af6d5cf)
+
 
 </details>
