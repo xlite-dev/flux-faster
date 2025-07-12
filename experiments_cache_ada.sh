@@ -31,7 +31,10 @@ python run_benchmark.py \
     --output-file bf16.png \
     > bf16.txt 2>&1
 
-# bfloat16 + cache
+# default cache settings:
+# F12B12 + warmup 8 steps + max cached 8 steps
+
+# bfloat16 + default cache 
 python run_benchmark.py \
     --ckpt ${CKPT} \
     --trace-file bf16_cache.json.gz \
@@ -47,7 +50,6 @@ python run_benchmark.py \
     > bf16_cache.txt 2>&1
 
 # bfloat16 + torch.compile
-# L20: 20.24 PSNR: 19.28
 python run_benchmark.py \
     --ckpt ${CKPT} \
     --trace-file bf16_compile.json.gz \
@@ -61,11 +63,10 @@ python run_benchmark.py \
     --output-file bf16_compile.png \
     > bf16_compile.txt 2>&1
 
-# only compile transformer blocks
-# L20: 20.49 PSNR: 39.72
+# bfloat16 + only compile transformer blocks
 python run_benchmark.py \
     --ckpt ${CKPT} \
-    --trace-file bf16_compile.json.gz \
+    --trace-file bf16_compile_trn.json.gz \
     --compile_export_mode compile \
     --only_compile_transformer_blocks \
     --disable_fused_projections \
@@ -75,9 +76,9 @@ python run_benchmark.py \
     --disable_inductor_tuning_flags \
     --num_inference_steps 28 \
     --output-file bf16_compile_trn.png \
-    > bf16_compile.txt 2>&1
+    > bf16_compile_trn.txt 2>&1
 
-# bfloat16 + torch.compile + cache
+# bfloat16 + torch.compile + default cache
 python run_benchmark.py \
     --ckpt ${CKPT} \
     --trace-file bf16_cache_compile.json.gz \
@@ -92,7 +93,7 @@ python run_benchmark.py \
     --output-file bf16_cache_compile.png \
     > bf16_cache_compile.txt 2>&1
 
-# bfloat16 + torch.compile + qkv projection + cache
+# bfloat16 + torch.compile + qkv projection + default cache
 python run_benchmark.py \
     --ckpt ${CKPT} \
     --trace-file bf16_compile_qkv.json.gz \
@@ -106,7 +107,7 @@ python run_benchmark.py \
     --output-file bf16_cache_compile_qkv.png \
     > bf16_cache_compile_qkv.txt 2>&1
 
-# bfloat16 + torch.compile + qkv projection + channels_last + cache
+# bfloat16 + torch.compile + qkv projection + channels_last + default cache
 python run_benchmark.py \
     --ckpt ${CKPT} \
     --trace-file bf16_cache_compile_qkv_chan.json.gz \
@@ -119,7 +120,7 @@ python run_benchmark.py \
     --output-file bf16_cache_compile_qkv_chan.png \
     > bf16_cache_compile_qkv_chan.txt 2>&1
 
-# bfloat16 + torch.compile + qkv projection + channels_last + float8 quant + cache
+# bfloat16 + torch.compile + qkv projection + channels_last + float8 quant + default cache
 python run_benchmark.py \
     --ckpt ${CKPT} \
     --trace-file bf16_cache_compile_qkv_chan_quant.json.gz \
@@ -132,7 +133,6 @@ python run_benchmark.py \
     > bf16_cache_compile_qkv_chan_quant.txt 2>&1
 
 # bfloat16 + torch.compile + qkv projection + channels_last + float8 quant + inductor flags
-# L20 13.29 PSNR: 18.07
 python run_benchmark.py \
     --ckpt ${CKPT} \
     --trace-file bf16_compile_qkv_chan_quant_flags.json.gz \
@@ -142,20 +142,18 @@ python run_benchmark.py \
     --output-file bf16_compile_qkv_chan_quant_flags.png \
     > bf16_compile_qkv_chan_quant_flags.txt 2>&1
 
-# only compile transformer blocks
-# L20 13.26 PSNR: 21.77
+# bfloat16 + only compile transformer blocks + qkv projection + channels_last + float8 quant + inductor flags
 python run_benchmark.py \
     --ckpt ${CKPT} \
-    --trace-file bf16_compile_qkv_chan_quant_flags.json.gz \
+    --trace-file bf16_compile_qkv_chan_quant_flags_trn.json.gz \
     --compile_export_mode compile \
     --only_compile_transformer_blocks \
     --disable_fa3 \
     --num_inference_steps 28 \
     --output-file bf16_compile_qkv_chan_quant_flags_trn.png \
-    > bf16_compile_qkv_chan_quant_flags.txt 2>&1
+    > bf16_compile_qkv_chan_quant_flags_trn.txt 2>&1
 
-# bfloat16 + torch.compile + qkv projection + channels_last + float8 quant + inductor flags + cache
-# L20: 11.21 PSNR: 22.24
+# bfloat16 + torch.compile + qkv projection + channels_last + float8 quant + inductor flags + default cache
 python run_benchmark.py \
     --ckpt ${CKPT} \
     --trace-file bf16_cache_compile_qkv_chan_quant_flags.json.gz \
@@ -166,20 +164,22 @@ python run_benchmark.py \
     --output-file bf16_cache_compile_qkv_chan_quant_flags.png \
     > bf16_cache_compile_qkv_chan_quant_flags.txt 2>&1
 
-# only compile transformer blocks
-# L20: 11.14 PSNR: 21.89
+# Fully optimized with different cache settings.
+# bfloat16 + only compile transformer blocks + qkv projection + channels_last + float8 quant + inductor flags 
+# + default cache
 python run_benchmark.py \
     --ckpt ${CKPT} \
-    --trace-file bf16_cache_compile_qkv_chan_quant_flags.json.gz \
+    --trace-file bf16_cache_compile_qkv_chan_quant_flags_trn.json.gz \
     --compile_export_mode compile \
     --only_compile_transformer_blocks \
     --disable_fa3 \
     --num_inference_steps 28 \
     --enable_cache_dit \
     --output-file bf16_cache_compile_qkv_chan_quant_flags_trn.png \
-    > bf16_cache_compile_qkv_chan_quant_flags.txt 2>&1
+    > bf16_cache_compile_qkv_chan_quant_flags_trn.txt 2>&1
 
-# only compile transformer blocks + F8B0
+# bfloat16 + only compile transformer blocks + qkv projection + channels_last + float8 quant + inductor flags 
+# + cache: F8B0 + warmup 8 steps + max cached 8 steps
 python run_benchmark.py \
     --ckpt ${CKPT} \
     --trace-file bf16_cache_F8B0_compile_qkv_chan_quant_flags_trn.json.gz \
@@ -192,7 +192,8 @@ python run_benchmark.py \
     --output-file bf16_cache_F8B0_compile_qkv_chan_quant_flags_trn.png \
     > bf16_cache_F8B0_compile_qkv_chan_quant_flags_trn.txt 2>&1
 
-# only compile transformer blocks + F8B0 + no warmup + no limit cache steps
+# bfloat16 + only compile transformer blocks + qkv projection + channels_last + float8 quant + inductor flags
+# + cache: F8B0 + no warmup steps + no limit cached steps
 python run_benchmark.py \
     --ckpt ${CKPT} \
     --trace-file bf16_cache_F8B0W0M0_compile_qkv_chan_quant_flags_trn.json.gz \
@@ -207,7 +208,8 @@ python run_benchmark.py \
     --output-file bf16_cache_F8B0W0M0_compile_qkv_chan_quant_flags_trn.png \
     > bf16_cache_F8B0W0M0_compile_qkv_chan_quant_flags_trn.txt 2>&1
     
-# only compile transformer blocks + F1B0
+# bfloat16 + only compile transformer blocks + qkv projection + channels_last + float8 quant + inductor flags 
+# + cache: F1B0 + warmup 8 steps + max cached 8 steps
 python run_benchmark.py \
     --ckpt ${CKPT} \
     --trace-file bf16_cache_F1B0_compile_qkv_chan_quant_flags_trn.json.gz \
@@ -220,7 +222,8 @@ python run_benchmark.py \
     --output-file bf16_cache_F1B0_compile_qkv_chan_quant_flags_trn.png \
     > bf16_cache_F1B0_compile_qkv_chan_quant_flags_trn.txt 2>&1
 
-# only compile transformer blocks + F1B0 + taylorseer
+# bfloat16 + only compile transformer blocks + qkv projection + channels_last + float8 quant + inductor flags 
+# + cache: F1B0 + warmup 8 steps + max cached 8 steps + TaylorSeer
 python run_benchmark.py \
     --ckpt ${CKPT} \
     --trace-file bf16_cache_F1B0_taylorseer_compile_qkv_chan_quant_flags_trn.json.gz \
@@ -234,7 +237,8 @@ python run_benchmark.py \
     --output-file bf16_cache_F1B0_taylorseer_compile_qkv_chan_quant_flags_trn.png \
     > bf16_cache_F1B0_taylorseer_compile_qkv_chan_quant_flags_trn.txt 2>&1
 
-# only compile transformer blocks + F1B0 + no warmup + no limit cache steps
+# bfloat16 + only compile transformer blocks + qkv projection + channels_last + float8 quant + inductor flags 
+# + cache: F1B0 + no warmup steps + no limit cached steps
 python run_benchmark.py \
     --ckpt ${CKPT} \
     --trace-file bf16_cache_F1B0W0M0_compile_qkv_chan_quant_flags_trn.json.gz \
@@ -249,7 +253,8 @@ python run_benchmark.py \
     --output-file bf16_cache_F1B0W0M0_compile_qkv_chan_quant_flags_trn.png \
     > bf16_cache_F1B0W0M0_compile_qkv_chan_quant_flags_trn.txt 2>&1
 
-# only compile transformer blocks + F1B0 + taylorseer + no warmup + no limit cache steps
+# bfloat16 + only compile transformer blocks + qkv projection + channels_last + float8 quant + inductor flags 
+# + cache: F1B0 + no warmup steps + no limit cached steps + TaylorSeer
 python run_benchmark.py \
     --ckpt ${CKPT} \
     --trace-file bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn.json.gz \
