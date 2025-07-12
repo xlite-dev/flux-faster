@@ -11,7 +11,7 @@ As you can see, under the configuration of `cache-dit + F1B0 + no warmup + Taylo
 |:---:|:---:|:---:|
 |PSNR: inf|PSNR: 21.77|PSNR: 23.23|
 |L20: 24.94s|L20: 13.26s|L20: 7.42s|
-|![output](https://github.com/user-attachments/assets/4a9237c5-5736-483b-85f7-38ab6c417009)|![bf16_compile_qkv_chan_quant_flags_trn](https://github.com/user-attachments/assets/958ae267-0351-4f85-b378-f863d9d3038c)|![bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn](https://github.com/user-attachments/assets/aa7538b1-b0e8-4ea4-b9ca-0d32e946d5b8)|
+|<img name="bf16" src="https://github.com/user-attachments/assets/4a9237c5-5736-483b-85f7-38ab6c417009" width=256px />| <img name="bf16_compile_qkv_chan_quant_flags_trn" src="https://github.com/user-attachments/assets/958ae267-0351-4f85-b378-f863d9d3038c" width=256px />| <img name="bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn" src="https://github.com/user-attachments/assets/aa7538b1-b0e8-4ea4-b9ca-0d32e946d5b8" width=256px />|
 
 <!--
 |BF16|BF16 + `cache-dit + F12B12 + warmup 8 steps`|BF16 + `cache-dit + F12B12 + warmup 8 steps` + compile|
