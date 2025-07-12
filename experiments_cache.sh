@@ -57,7 +57,7 @@ python run_benchmark.py \
     --disable_quant \
     --disable_inductor_tuning_flags \
     --num_inference_steps 28 \
-    --output-file bf16_cache_compile.png \
+    --output-file bf16_compile.png \
     > bf16_compile.txt 2>&1
 
 # bfloat16 + torch.compile + cache
