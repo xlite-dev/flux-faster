@@ -7,11 +7,11 @@ pip3 install -U cache-dit # or: pip3 install git+https://github.com/vipshop/cach
 ```
 As you can see, under the configuration of `cache-dit + F1B0 + no warmup + TaylorSeer`, it only takes 7.42 seconds on NVIDIA L20, with a cumulative speedup of 3.36x (compared to the baseline of 24.94 seconds), while still maintaining high precision with a PSNR of 23.23.
 
-|BF16 Baseline (FLUX.1-dev 28 steps)|BF16 + compile + qkv projection + channels_last + float8 quant + inductor flags|BF16 + compile + qkv projection + channels_last + float8 quant + inductor flags + `cache-dit + F1B0 + no warmup + TaylorSeer` |  
+|BF16 Baseline (FLUX.1-dev 28 steps) w/o compile + w/o cache-dit|BF16 + compile + qkv projection + channels_last + float8 quant + inductor flags|BF16 + compile + qkv projection + channels_last + float8 quant + inductor flags + `cache-dit + F1B0 + no warmup + TaylorSeer` |  
 |:---:|:---:|:---:|
 |PSNR: inf|PSNR: 21.77|PSNR: 23.23|
 |L20: 24.94s|L20: 13.26s|L20: 7.42s|
-|<img name="bf16" src="https://github.com/user-attachments/assets/4a9237c5-5736-483b-85f7-38ab6c417009" width=256px />| <img name="bf16_compile_qkv_chan_quant_flags_trn" src="https://github.com/user-attachments/assets/958ae267-0351-4f85-b378-f863d9d3038c" width=256px />| <img name="bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn" src="https://github.com/user-attachments/assets/aa7538b1-b0e8-4ea4-b9ca-0d32e946d5b8" width=256px />|
+|![output](https://github.com/user-attachments/assets/4a9237c5-5736-483b-85f7-38ab6c417009)|![bf16_compile_qkv_chan_quant_flags_trn](https://github.com/user-attachments/assets/958ae267-0351-4f85-b378-f863d9d3038c)|![bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn](https://github.com/user-attachments/assets/aa7538b1-b0e8-4ea4-b9ca-0d32e946d5b8)|
 
 <!--
 |BF16|BF16 + `cache-dit + F12B12 + warmup 8 steps`|BF16 + `cache-dit + F12B12 + warmup 8 steps` + compile|
