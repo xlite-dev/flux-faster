@@ -14,6 +14,10 @@ pip3 install -U cache-dit # or: pip3 install git+https://github.com/vipshop/cach
 |PSNR: 19.28|PSNR: 18.07|PSNR: 22.24|
 |L20: 20.24s|L20: 13.29s|L20: 11.21s|
 |![bf16_compile](https://github.com/user-attachments/assets/a4bef05b-272d-42f7-ba02-6855731e6138)|![bf16_compile_qkv_chan_quant_flags](https://github.com/user-attachments/assets/5dc236e0-d2b4-43d1-bc60-ca9af51fd611)|![bf16_cache_compile_qkv_chan_quant_flags](https://github.com/user-attachments/assets/b96874a7-0224-41d7-be24-3f8810f9a4d3)|
+|BF16 + **compile transformer block only** | BF16 + **compile transformer block only** + qkv projection + channels_last + float8 quant + inductor flags |BF16 + **compile transformer block only** + qkv projection + channels_last + float8 quant + inductor flags + **cache-dit**|
+|PSNR: 39.72|PSNR: 21.77|PSNR: 21.89|
+|L20: 20.49s|L20: 13.26 |L20: 11.14|
+|![bf16_compile_trn](https://github.com/user-attachments/assets/fa00a80f-b1cb-4c60-8bad-7fb369f0e280)|![bf16_compile_qkv_chan_quant_flags_trn](https://github.com/user-attachments/assets/958ae267-0351-4f85-b378-f863d9d3038c)|![bf16_cache_compile_qkv_chan_quant_flags_trn](https://github.com/user-attachments/assets/0ae9bf21-71d2-47d8-81e8-4fc7828dd801)|
 
 ## Important Notes
 
