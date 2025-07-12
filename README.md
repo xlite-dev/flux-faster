@@ -3,7 +3,7 @@
 A forked version of [huggingface/flux-fast](https://github.com/huggingface/flux-fast) that **makes flux-fast even faster with [cache-dit](https://github.com/vipshop/cache-dit).**
 
 ```bash
-pip install -U cache-dit
+pip3 install -U cache-dit # or: pip3 install git+https://github.com/vipshop/cache-dit.git
 ```
 |BF16|BF16 + cache-dit|BF16 + cache-dit + compile|
 |:---:|:---:|:---:|
