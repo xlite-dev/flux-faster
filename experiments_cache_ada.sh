@@ -178,3 +178,89 @@ python run_benchmark.py \
     --enable_cache_dit \
     --output-file bf16_cache_compile_qkv_chan_quant_flags_trn.png \
     > bf16_cache_compile_qkv_chan_quant_flags.txt 2>&1
+
+# only compile transformer blocks + F8B0
+python run_benchmark.py \
+    --ckpt ${CKPT} \
+    --trace-file bf16_cache_F8B0_compile_qkv_chan_quant_flags_trn.json.gz \
+    --compile_export_mode compile \
+    --only_compile_transformer_blocks \
+    --disable_fa3 \
+    --num_inference_steps 28 \
+    --enable_cache_dit \
+    --Fn 8 --Bn 0 \
+    --output-file bf16_cache_F8B0_compile_qkv_chan_quant_flags_trn.png \
+    > bf16_cache_F8B0_compile_qkv_chan_quant_flags_trn.txt 2>&1
+
+# only compile transformer blocks + F8B0 + no warmup + no limit cache steps
+python run_benchmark.py \
+    --ckpt ${CKPT} \
+    --trace-file bf16_cache_F8B0W0M0_compile_qkv_chan_quant_flags_trn.json.gz \
+    --compile_export_mode compile \
+    --only_compile_transformer_blocks \
+    --disable_fa3 \
+    --num_inference_steps 28 \
+    --enable_cache_dit \
+    --Fn 8 --Bn 0 \
+    --warmup_steps 0 \
+    --max_cached_steps -1 \
+    --output-file bf16_cache_F8B0W0M0_compile_qkv_chan_quant_flags_trn.png \
+    > bf16_cache_F8B0W0M0_compile_qkv_chan_quant_flags_trn.txt 2>&1
+    
+# only compile transformer blocks + F1B0
+python run_benchmark.py \
+    --ckpt ${CKPT} \
+    --trace-file bf16_cache_F1B0_compile_qkv_chan_quant_flags_trn.json.gz \
+    --compile_export_mode compile \
+    --only_compile_transformer_blocks \
+    --disable_fa3 \
+    --num_inference_steps 28 \
+    --enable_cache_dit \
+    --Fn 1 --Bn 0 \
+    --output-file bf16_cache_F1B0_compile_qkv_chan_quant_flags_trn.png \
+    > bf16_cache_F1B0_compile_qkv_chan_quant_flags_trn.txt 2>&1
+
+# only compile transformer blocks + F1B0 + taylorseer
+python run_benchmark.py \
+    --ckpt ${CKPT} \
+    --trace-file bf16_cache_F1B0_taylorseer_compile_qkv_chan_quant_flags_trn.json.gz \
+    --compile_export_mode compile \
+    --only_compile_transformer_blocks \
+    --disable_fa3 \
+    --num_inference_steps 28 \
+    --enable_cache_dit \
+    --Fn 1 --Bn 0 \
+    --enable_taylorsser \
+    --output-file bf16_cache_F1B0_taylorseer_compile_qkv_chan_quant_flags_trn.png \
+    > bf16_cache_F1B0_taylorseer_compile_qkv_chan_quant_flags_trn.txt 2>&1
+
+# only compile transformer blocks + F1B0 + no warmup + no limit cache steps
+python run_benchmark.py \
+    --ckpt ${CKPT} \
+    --trace-file bf16_cache_F1B0W0M0_compile_qkv_chan_quant_flags_trn.json.gz \
+    --compile_export_mode compile \
+    --only_compile_transformer_blocks \
+    --disable_fa3 \
+    --num_inference_steps 28 \
+    --enable_cache_dit \
+    --Fn 1 --Bn 0 \
+    --warmup_steps 0 \
+    --max_cached_steps -1 \
+    --output-file bf16_cache_F1B0W0M0_compile_qkv_chan_quant_flags_trn.png \
+    > bf16_cache_F1B0W0M0_compile_qkv_chan_quant_flags_trn.txt 2>&1
+
+# only compile transformer blocks + F1B0 + taylorseer + no warmup + no limit cache steps
+python run_benchmark.py \
+    --ckpt ${CKPT} \
+    --trace-file bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn.json.gz \
+    --compile_export_mode compile \
+    --only_compile_transformer_blocks \
+    --disable_fa3 \
+    --num_inference_steps 28 \
+    --enable_cache_dit \
+    --Fn 1 --Bn 0 \
+    --warmup_steps 0 \
+    --max_cached_steps -1 \
+    --enable_taylorsser \
+    --output-file bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn.png \
+    > bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn.txt 2>&1
