@@ -7,7 +7,7 @@ pip3 install -U cache-dit # or: pip3 install git+https://github.com/vipshop/cach
 ```
 As you can see, under the configuration of `cache-dit + F1B0 + no warmup + TaylorSeer`, it only takes 7.42 seconds on NVIDIA L20, with a cumulative speedup of 3.36x (compared to the baseline of 24.94 seconds), while still maintaining high precision with a PSNR of 23.23.
 
-|BF16 Baseline (FLUX.1-dev 28 steps) w/o compile + w/o cache-dit|BF16 + compile + qkv projection + channels_last + float8 quant + inductor flags|BF16 + compile + qkv projection + channels_last + float8 quant + inductor flags + `cache-dit + F1B0 + no warmup + TaylorSeer` |  
+|FLUX.1-dev 28 steps, Baseline: BF16 + w/o compile + w/o cache-dit |BF16 + compile + qkv projection + channels_last + float8 quant + inductor flags|BF16 + compile + qkv projection + channels_last + float8 quant + inductor flags + `cache-dit + F1B0 + no warmup + TaylorSeer` |  
 |:---:|:---:|:---:|
 |PSNR: inf|PSNR: 21.77|PSNR: 23.23|
 |L20: 24.94s|L20: 13.26s|L20: 7.42s|
