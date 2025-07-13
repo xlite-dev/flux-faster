@@ -13,7 +13,9 @@ As you can see, under the configuration of `cache-dit + F1B0 + no warmup + Taylo
 |L20: 24.94s|L20: 13.26s|L20: 7.42s|
 |![output](https://github.com/user-attachments/assets/4a9237c5-5736-483b-85f7-38ab6c417009)|![bf16_compile_qkv_chan_quant_flags_trn](https://github.com/user-attachments/assets/958ae267-0351-4f85-b378-f863d9d3038c)|![bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn](https://github.com/user-attachments/assets/aa7538b1-b0e8-4ea4-b9ca-0d32e946d5b8)|
 
-<!--
+<details>
+<summary><b>More results</b></summary>   
+    
 |BF16|BF16 + `cache-dit + F12B12 + warmup 8 steps`|BF16 + `cache-dit + F12B12 + warmup 8 steps` + compile|
 |:---:|:---:|:---:|
 |Baseline (FLUX.1-dev 28 steps)|PSNR: 34.23|PSNR: 34.16|
@@ -31,7 +33,8 @@ As you can see, under the configuration of `cache-dit + F1B0 + no warmup + Taylo
 |PSNR: 21.82|PSNR: 20.93|PSNR: 23.23|
 |L20: 8.98s|L20: 7.41s |L20: 7.42s|  
 |![bf16_cache_F8B0W0M0_compile_qkv_chan_quant_flags_trn](https://github.com/user-attachments/assets/996f9dea-4fe3-4c1b-8f86-c956f175d3d9)|![bf16_cache_F1B0W0M0_compile_qkv_chan_quant_flags_trn](https://github.com/user-attachments/assets/90c05c57-73f8-4acd-851e-ba7e8993ced8)|![bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn](https://github.com/user-attachments/assets/aa7538b1-b0e8-4ea4-b9ca-0d32e946d5b8)|
---> 
+
+</details>
 
 ## Important Notes
 
