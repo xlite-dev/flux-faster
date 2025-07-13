@@ -180,6 +180,6 @@ python run_benchmark.py \
     --Fn 1 --Bn 0 \
     --warmup_steps 0 \
     --max_cached_steps -1 \
-    --enable_taylorsser \
+    --enable_taylorseer \
     --output-file bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn.png \
     > bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn.txt 2>&1
