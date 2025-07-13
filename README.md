@@ -37,7 +37,7 @@ As you can see, under the configuration of `cache-dit + F1B0 + no warmup + Taylo
 
 1) Please add `--enable_cache_dit` flag to use cache-dit. cache-dit doesn't work with torch.export now. cache-dit extends Flux and introduces some Python dynamic operations, so it may not be possible to export the model using torch.export.
 2) Compiling the entire transformer appears to introduce precision loss in my tests on an NVIDIA L20 device (tested with PyTorch 2.7.1). Please try to add `--only_compile_transformer_blocks` flag to compile transformer blocks only if you want to keep higer precision.
-
+  
 # flux-fast  
 Making Flux go brrr on GPUs. With simple recipes from this repo, we enabled ~2.5x speedup on Flux.1-Schnell and Flux.1-Dev using (mainly) pure PyTorch code and a beefy GPU like H100. This repo is NOT meant to be a library or an out-of-the-box solution. So, please fork the repo, hack into the code, and share your results 🤗
 
@@ -174,6 +174,7 @@ On AMD:
 python gen_image.py --prompt "A cat playing with a ball of yarn" --output-file output.png --compile_export_mode compile
 ```
 Currently, only torch.export is not working as expected. Instead, use `torch.compile` as shown in the above command.
+
 
 
 ## Benchmarking
