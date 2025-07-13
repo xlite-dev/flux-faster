@@ -1,6 +1,6 @@
 # flux-faster
 
-A forked version of [huggingface/flux-fast](https://github.com/huggingface/flux-fast) that **makes flux-fast even faster with [cache-dit](https://github.com/vipshop/cache-dit).**
+A forked version of [huggingface/flux-fast](https://github.com/huggingface/flux-fast) that **makes flux-fast even faster with [cache-dit](https://github.com/vipshop/cache-dit), 3.3x speedup on NVIDIA L20.**
 
 ```bash
 pip3 install -U cache-dit # or: pip3 install git+https://github.com/vipshop/cache-dit.git
