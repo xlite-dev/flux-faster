@@ -40,7 +40,7 @@ As you can see, under the configuration of `cache-dit + F1B0 + no warmup + Taylo
 
 ## Experiments
 
-Please run this script to reproduce the results: https://github.com/xlite-dev/flux-faster/blob/main/experiments_cache.sh
+Please run [experiments_cache.sh](https://github.com/xlite-dev/flux-faster/blob/main/experiments_cache.sh) script to reproduce the results: 
 
 ```bash
 # bfloat16 + only compile transformer blocks + qkv projection + channels_last + float8 quant + inductor flags 
