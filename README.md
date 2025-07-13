@@ -53,7 +53,7 @@ Please run [experiments_cache.sh](https://github.com/xlite-dev/flux-faster/blob/
 # bfloat16 + only compile transformer blocks + qkv projection + channels_last + float8 quant + inductor flags 
 # + cache: F1B0 + no warmup steps + no limit cached steps + TaylorSeer
 python run_benchmark.py \
-    --ckpt ${CKPT} \
+    --ckpt black-forest-labs/FLUX.1-dev \
     --trace-file bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn.json.gz \
     --compile_export_mode compile \
     --only_compile_transformer_blocks \
