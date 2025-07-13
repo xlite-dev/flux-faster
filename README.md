@@ -174,7 +174,7 @@ pip install --pre torchao==0.12.0.dev20250610+rocm6.4 --index-url https://downlo
 pip install git+https://github.com/ROCm/aiter
 ```
 
-(For AMD) Instead of flash attention v3, we use (AITER)[https://github.com/ROCm/aiter]. It provides the required fp8 MHA kernels  
+(For AMD) Instead of flash attention v3, we use [AITER](https://github.com/ROCm/aiter). It provides the required fp8 MHA kernels  
 
 For hardware, we used a 96GB 700W H100 GPU and 192GB MI300X GPU. Some of the optimizations applied (BFloat16, torch.compile, Combining q,k,v projections, dynamic float8 quantization) are available on CPU as well.
 
