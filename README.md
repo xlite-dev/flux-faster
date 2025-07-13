@@ -1,4 +1,4 @@
-# flux-faster
+# 🤗 flux-faster
 
 A forked version of [huggingface/flux-fast](https://github.com/huggingface/flux-fast) that **makes flux-fast even faster with [cache-dit](https://github.com/vipshop/cache-dit), 3.3x speedup on NVIDIA L20 while still maintaining high precision.**
 
