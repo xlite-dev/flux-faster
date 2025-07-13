@@ -7,6 +7,7 @@ from utils.pipeline_utils import load_pipeline  # noqa: E402
 from diffusers.utils import load_image
 import os
 
+
 def _determine_pipe_call_kwargs(args):
     kwargs = {"max_sequence_length": 256, "guidance_scale": 0.0}
     ckpt_id = args.ckpt
@@ -14,8 +15,9 @@ def _determine_pipe_call_kwargs(args):
         kwargs = {"max_sequence_length": 512, "guidance_scale": 3.5}
     elif ckpt_id == "black-forest-labs/FLUX.1-Kontext-dev":
         kwargs = {"max_sequence_length": 512, "guidance_scale": 2.5}
-        kwargs.update({"image": load_image(args.image)}) 
+        kwargs.update({"image": load_image(args.image)})
     return kwargs
+
 
 def set_rand_seeds(seed):
     random.seed(seed)
@@ -32,8 +34,8 @@ def main(args):
     # warmup
     for _ in range(3):
         image = pipeline(
-            prompt=args.prompt, 
-            num_inference_steps=args.num_inference_steps, 
+            prompt=args.prompt,
+            num_inference_steps=args.num_inference_steps,
             generator=torch.manual_seed(args.seed),
             **_determine_pipe_call_kwargs(args)
         ).images[0]
@@ -43,24 +45,30 @@ def main(args):
     for _ in range(10):
         begin = time.time()
         image = pipeline(
-            prompt=args.prompt, 
-            num_inference_steps=args.num_inference_steps, 
+            prompt=args.prompt,
+            num_inference_steps=args.num_inference_steps,
             generator=torch.manual_seed(args.seed),
             **_determine_pipe_call_kwargs(args)
         ).images[0]
         end = time.time()
         timings.append(end - begin)
     timings = torch.tensor(timings)
-    print('time mean/var:', timings, timings.mean().item(), timings.var().item())
+    print(
+        "time mean/var:", timings, timings.mean().item(), timings.var().item()
+    )
     image.save(args.output_file)
 
     # optionally generate PyTorch Profiler trace
     # this is done after benchmarking because tracing introduces overhead
     if args.trace_file is not None:
         # annotate parts of the model within the profiler trace
-        pipeline.transformer.forward = annotate(pipeline.transformer.forward, "denoising_step")
+        pipeline.transformer.forward = annotate(
+            pipeline.transformer.forward, "denoising_step"
+        )
         pipeline.vae.decode = annotate(pipeline.vae.decode, "decoding")
-        pipeline.encode_prompt = annotate(pipeline.encode_prompt, "prompt_encoding")
+        pipeline.encode_prompt = annotate(
+            pipeline.encode_prompt, "prompt_encoding"
+        )
         pipeline.image_processor.postprocess = annotate(
             pipeline.image_processor.postprocess, "postprocessing"
         )
@@ -69,11 +77,14 @@ def main(args):
         )
 
         # Generate trace with the PyTorch Profiler
-        with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True) as prof:
+        with profile(
+            activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+            record_shapes=True,
+        ) as prof:
             with record_function("timed_region"):
                 image = pipeline(
-                    args.prompt, 
-                    num_inference_steps=args.num_inference_steps, 
+                    args.prompt,
+                    num_inference_steps=args.num_inference_steps,
                     **_determine_pipe_call_kwargs(args)
                 ).images[0]
         prof.export_chrome_trace(args.trace_file)
