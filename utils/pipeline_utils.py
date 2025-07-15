@@ -7,7 +7,6 @@ from typing import List, Optional
 from PIL import Image
 import inspect
 
-
 def is_hip():
     return torch.version.hip is not None
 
@@ -17,7 +16,7 @@ def flash_attn_func(
     q: torch.Tensor,
     k: torch.Tensor,
     v: torch.Tensor,
-    softmax_scale: Optional[float] = None,
+    softmax_scale: Optional[float] =None,
     causal: bool = False,
     # probably wrong type for these 4
     qv: Optional[float] = None,
@@ -32,16 +31,14 @@ def flash_attn_func(
     pack_gqa: Optional[float] = None,
     deterministic: bool = False,
     sm_margin: int = 0,
-) -> torch.Tensor:  # Tuple[torch.Tensor, torch.Tensor]:
+) -> torch.Tensor: #Tuple[torch.Tensor, torch.Tensor]:
     if window_size is None:
         window_size = (-1, -1)
     else:
         window_size = tuple(window_size)
 
     if is_hip():
-        from aiter.ops.triton.mha import (
-            flash_attn_fp8_func as flash_attn_interface_func,
-        )
+        from aiter.ops.triton.mha import flash_attn_fp8_func as flash_attn_interface_func
     else:
         from flash_attn.flash_attn_interface import flash_attn_interface_func
 
@@ -68,22 +65,15 @@ def flash_attn_func(
         # For AMD, AITER fp8 kernels take in fp32 inputs and converts it to fp8 by itself
         # So we don't need to convert to fp8 here
         outputs = flash_attn_interface_func(
-            q,
-            k,
-            v,
-            **kwargs,
+            q, k, v, **kwargs,
         )
     else:
         dtype = torch.float8_e4m3fn
         outputs = flash_attn_interface_func(
-            q.to(dtype),
-            k.to(dtype),
-            v.to(dtype),
-            **kwargs,
+            q.to(dtype), k.to(dtype), v.to(dtype), **kwargs,
         )[0]
 
     return outputs.contiguous().to(torch.bfloat16) if is_hip() else outputs
-
 
 @flash_attn_func.register_fake
 def _(q, k, v, **kwargs):
@@ -91,8 +81,7 @@ def _(q, k, v, **kwargs):
     # 1. output: (batch, seq_len, num_heads, head_dim)
     # 2. softmax_lse: (batch, num_heads, seq_len) with dtype=torch.float32
     meta_q = torch.empty_like(q).contiguous()
-    return meta_q  # , q.new_empty((q.size(0), q.size(2), q.size(1)), dtype=torch.float32)
-
+    return meta_q #, q.new_empty((q.size(0), q.size(2), q.size(1)), dtype=torch.float32)
 
 # Copied FusedFluxAttnProcessor2_0 but using flash v3 instead of SDPA
 class FlashFusedFluxAttnProcessor3_0:
@@ -102,16 +91,14 @@ class FlashFusedFluxAttnProcessor3_0:
 
         if is_hip():
             try:
-                from aiter.ops.triton.mha import (
-                    flash_attn_fp8_func as flash_attn_interface_func,
-                )
+                from aiter.ops.triton.mha import flash_attn_fp8_func as flash_attn_interface_func
             except ImportError:
-                raise ImportError("aiter is required to be installed")
+                raise ImportError(
+                    "aiter is required to be installed"
+                )
         else:
             try:
-                from flash_attn.flash_attn_interface import (
-                    flash_attn_interface_func,
-                )
+                from flash_attn.flash_attn_interface import flash_attn_interface_func
             except ImportError:
                 raise ImportError(
                     "flash_attention v3 package is required to be installed"
@@ -125,11 +112,7 @@ class FlashFusedFluxAttnProcessor3_0:
         attention_mask: Optional[torch.FloatTensor] = None,
         image_rotary_emb: Optional[torch.Tensor] = None,
     ) -> torch.FloatTensor:
-        batch_size, _, _ = (
-            hidden_states.shape
-            if encoder_hidden_states is None
-            else encoder_hidden_states.shape
-        )
+        batch_size, _, _ = hidden_states.shape if encoder_hidden_states is None else encoder_hidden_states.shape
 
         # `sample` projections.
         qkv = attn.to_qkv(hidden_states)
@@ -159,30 +142,20 @@ class FlashFusedFluxAttnProcessor3_0:
                 encoder_hidden_states_value_proj,
             ) = torch.split(encoder_qkv, split_size, dim=-1)
 
-            encoder_hidden_states_query_proj = (
-                encoder_hidden_states_query_proj.view(
-                    batch_size, -1, attn.heads, head_dim
-                ).transpose(1, 2)
-            )
-            encoder_hidden_states_key_proj = (
-                encoder_hidden_states_key_proj.view(
-                    batch_size, -1, attn.heads, head_dim
-                ).transpose(1, 2)
-            )
-            encoder_hidden_states_value_proj = (
-                encoder_hidden_states_value_proj.view(
-                    batch_size, -1, attn.heads, head_dim
-                ).transpose(1, 2)
-            )
+            encoder_hidden_states_query_proj = encoder_hidden_states_query_proj.view(
+                batch_size, -1, attn.heads, head_dim
+            ).transpose(1, 2)
+            encoder_hidden_states_key_proj = encoder_hidden_states_key_proj.view(
+                batch_size, -1, attn.heads, head_dim
+            ).transpose(1, 2)
+            encoder_hidden_states_value_proj = encoder_hidden_states_value_proj.view(
+                batch_size, -1, attn.heads, head_dim
+            ).transpose(1, 2)
 
             if attn.norm_added_q is not None:
-                encoder_hidden_states_query_proj = attn.norm_added_q(
-                    encoder_hidden_states_query_proj
-                )
+                encoder_hidden_states_query_proj = attn.norm_added_q(encoder_hidden_states_query_proj)
             if attn.norm_added_k is not None:
-                encoder_hidden_states_key_proj = attn.norm_added_k(
-                    encoder_hidden_states_key_proj
-                )
+                encoder_hidden_states_key_proj = attn.norm_added_k(encoder_hidden_states_key_proj)
 
             # attention
             query = torch.cat([encoder_hidden_states_query_proj, query], dim=2)
@@ -197,12 +170,11 @@ class FlashFusedFluxAttnProcessor3_0:
 
         # NB: transposes are necessary to match expected SDPA input shape
         hidden_states = flash_attn_func(
-            query.transpose(1, 2), key.transpose(1, 2), value.transpose(1, 2)
-        )[0].transpose(1, 2)
+            query.transpose(1, 2),
+            key.transpose(1, 2),
+            value.transpose(1, 2))[0].transpose(1, 2)
 
-        hidden_states = hidden_states.transpose(1, 2).reshape(
-            batch_size, -1, attn.heads * head_dim
-        )
+        hidden_states = hidden_states.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
         hidden_states = hidden_states.to(query.dtype)
 
         if encoder_hidden_states is not None:
@@ -227,15 +199,9 @@ def cudagraph(f):
     from torch.utils._pytree import tree_map_only
 
     _graphs = {}
-
     def f_(*args, **kwargs):
-        key = hash(
-            tuple(
-                tuple(kwargs[a].shape)
-                for a in sorted(kwargs.keys())
-                if isinstance(kwargs[a], torch.Tensor)
-            )
-        )
+        key = hash(tuple(tuple(kwargs[a].shape) for a in sorted(kwargs.keys())
+                         if isinstance(kwargs[a], torch.Tensor)))
         if key in _graphs:
             # use the cached wrapper if one exists. this will perform CUDAGraph replay
             wrapped, *_ = _graphs[key]
@@ -243,21 +209,14 @@ def cudagraph(f):
 
         # record a new CUDAGraph and cache it for future use
         g = torch.cuda.CUDAGraph()
-        in_args, in_kwargs = tree_map_only(
-            torch.Tensor, lambda t: t.clone(), (args, kwargs)
-        )
-        f(*in_args, **in_kwargs)  # stream warmup
+        in_args, in_kwargs = tree_map_only(torch.Tensor, lambda t: t.clone(), (args, kwargs))
+        f(*in_args, **in_kwargs) # stream warmup
         with torch.cuda.graph(g):
             out_tensors = f(*in_args, **in_kwargs)
-
         def wrapped(*args, **kwargs):
             # note that CUDAGraphs require inputs / outputs to be in fixed memory locations.
             # inputs must be copied into the fixed input memory locations.
-            [
-                a.copy_(b)
-                for a, b in zip(in_args, args)
-                if isinstance(a, torch.Tensor)
-            ]
+            [a.copy_(b) for a, b in zip(in_args, args) if isinstance(a, torch.Tensor)]
             for key in kwargs:
                 if isinstance(kwargs[key], torch.Tensor):
                     in_kwargs[key].copy_(kwargs[key])
@@ -269,7 +228,6 @@ def cudagraph(f):
         # cache function that does CUDAGraph replay
         _graphs[key] = (wrapped, g, in_args, in_kwargs, out_tensors)
         return wrapped(*args, **kwargs)
-
     return f_
 
 
@@ -277,52 +235,47 @@ def use_compile(pipeline, args):
     # Compile the compute-intensive portions of the model: denoising transformer / decoder
     is_kontext = "Kontext" in pipeline.__class__.__name__
     # Compile transformer w/o fullgraph and cudagraphs if cache-dit is enabled.
-    # The cache-dit relies heavily on dynamic Python operations to maintain the cache_context,
-    # so it is necessary to introduce graph breaks at appropriate positions to be compatible
-    # with torch.compile. Thus, we compile the transformer with `max-autotune-no-cudagraphs`
+    # The cache-dit relies heavily on dynamic Python operations to maintain the cache_context, 
+    # so it is necessary to introduce graph breaks at appropriate positions to be compatible 
+    # with torch.compile. Thus, we compile the transformer with `max-autotune-no-cudagraphs` 
     # mode if cache-dit is enabled. Otherwise, we compile with `max-autotune` mode.
     is_cached = getattr(pipeline.transformer, "_is_cached", False)
     if not args.only_compile_transformer_blocks:
         # For AMD MI300X w/ the AITER kernels, the default dynamic=None is not working as expected, giving black results.
-        # Therefore, we use dynamic=True for AMD only. This leads to a small perf penalty, but should be fixed eventually.
+        # Therefore, we use dynamic=True for AMD only. This leads to a small perf penalty, but should be fixed eventually. 
         pipeline.transformer = torch.compile(
-            pipeline.transformer,
-            mode=(
-                "max-autotune"
-                if not is_cached
-                else "max-autotune-no-cudagraphs"
-            ),
-            fullgraph=(True if not is_cached else False),
-            dynamic=True if is_hip() else None,
+            pipeline.transformer, 
+            mode="max-autotune" if not is_cached else "max-autotune-no-cudagraphs", 
+            fullgraph=(True if not is_cached else False), 
+            dynamic=True if is_hip() else None
         )
     else:
-        # Only compile transformer blocks not the whole model for
-        # FluxTransformer2DModel to keep higher precision.
+        # Only compile transformer blocks not the whole model for FluxTransformer2DModel 
+        # to keep higher precision. The impact on performance is negligible. However, 
+        # users should consider increasing the recompile limit of torch._dynamo. 
+        # Otherwise, the recompile_limit error may be triggered, causing the module 
+        # to fall back to eager mode.
         torch._dynamo.config.recompile_limit = 96  # default is 8
         torch._dynamo.config.accumulated_recompile_limit = (
             2048  # default is 256
         )
         for module in pipeline.transformer.transformer_blocks:
             module.compile(
-                mode="max-autotune-no-cudagraphs",
-                dynamic=True if is_hip() else None,
+                mode="max-autotune-no-cudagraphs", 
+                dynamic=True if is_hip() else None
             )
         for module in pipeline.transformer.single_transformer_blocks:
             module.compile(
-                mode="max-autotune-no-cudagraphs",
-                dynamic=True if is_hip() else None,
+                mode="max-autotune-no-cudagraphs", 
+                dynamic=True if is_hip() else None
             )
     pipeline.vae.decode = torch.compile(
-        pipeline.vae.decode,
-        mode="max-autotune",
-        fullgraph=True,
-        dynamic=True if is_hip() else None,
+        pipeline.vae.decode, mode="max-autotune", fullgraph=True, dynamic=True if is_hip() else None
     )
 
     # warmup for a few iterations (`num_inference_steps` shouldn't matter)
     input_kwargs = {
-        "prompt": "dummy prompt to trigger torch compilation",
-        "num_inference_steps": 4,
+        "prompt": "dummy prompt to trigger torch compilation", "num_inference_steps": 4
     }
     if is_kontext:
         input_kwargs.update({"image": Image.new("RGB", size=(1024, 1024))})
@@ -344,15 +297,11 @@ def load_package(package_path):
     if not os.path.exists(package_path):
         download_hosted_file(os.path.basename(package_path), package_path)
 
-    loaded_package = inductor_load_package(
-        package_path, run_single_threaded=True
-    )
+    loaded_package = inductor_load_package(package_path, run_single_threaded=True)
     return loaded_package
 
 
-def use_export_aoti(
-    pipeline, cache_dir, serialize=False, is_timestep_distilled=True
-):
+def use_export_aoti(pipeline, cache_dir, serialize=False, is_timestep_distilled=True):
     # create cache dir if needed
     pathlib.Path(cache_dir).mkdir(parents=True, exist_ok=True)
 
@@ -366,49 +315,26 @@ def use_export_aoti(
     seq_length = 256 if is_timestep_distilled else 512
     # these shapes are for 1024x1024 resolution.
     transformer_kwargs = {
-        "hidden_states": (
-            _example_tensor(1, 4096 * 2, 64)
-            if is_kontext
-            else _example_tensor(1, 4096, 64)
-        ),
-        "timestep": torch.tensor([1.0], device="cuda", dtype=torch.bfloat16),
-        "guidance": (
-            None
-            if is_timestep_distilled
-            else torch.tensor([1.0], device="cuda", dtype=torch.bfloat16)
-        ),
+        "hidden_states": _example_tensor(1, 4096 * 2, 64) if is_kontext else _example_tensor(1, 4096, 64),
+        "timestep": torch.tensor([1.], device="cuda", dtype=torch.bfloat16),
+        "guidance": None if is_timestep_distilled else torch.tensor([1.], device="cuda", dtype=torch.bfloat16),
         "pooled_projections": _example_tensor(1, 768),
         "encoder_hidden_states": _example_tensor(1, seq_length, 4096),
         "txt_ids": _example_tensor(seq_length, 3),
-        "img_ids": (
-            _example_tensor(4096 * 2, 3)
-            if is_kontext
-            else _example_tensor(4096, 3)
-        ),
+        "img_ids": _example_tensor(4096 * 2, 3) if is_kontext else _example_tensor(4096, 3),
         "joint_attention_kwargs": {},
         "return_dict": False,
     }
 
     # Possibly serialize model out
-    dev_transformer_name = (
-        "exported_kontext_dev_transformer.pt2"
-        if is_kontext
-        else "exported_dev_transformer.pt2"
-    )
+    dev_transformer_name = "exported_kontext_dev_transformer.pt2" if is_kontext else "exported_dev_transformer.pt2"
     transformer_package_path = os.path.join(
-        cache_dir,
-        (
-            "exported_transformer.pt2"
-            if is_timestep_distilled
-            else dev_transformer_name
-        ),
+        cache_dir, "exported_transformer.pt2" if is_timestep_distilled else dev_transformer_name
     )
     if serialize:
         # Apply export
-        exported_transformer: torch.export.ExportedProgram = (
-            torch.export.export(
-                pipeline.transformer, args=(), kwargs=transformer_kwargs
-            )
+        exported_transformer: torch.export.ExportedProgram = torch.export.export(
+            pipeline.transformer, args=(), kwargs=transformer_kwargs
         )
 
         # Apply AOTI
@@ -440,19 +366,12 @@ def use_export_aoti(
 
     # Possibly serialize model out
     decoder_package_path = os.path.join(
-        cache_dir,
-        (
-            "exported_decoder.pt2"
-            if is_timestep_distilled
-            else "exported_dev_decoder.pt2"
-        ),
+        cache_dir, "exported_decoder.pt2" if is_timestep_distilled else "exported_dev_decoder.pt2"
     )
     if serialize:
         # Apply export
         exported_decoder: torch.export.ExportedProgram = torch.export.export(
-            pipeline.vae,
-            args=(_example_tensor(1, 16, 128, 128),),
-            kwargs=vae_decode_kwargs,
+            pipeline.vae, args=(_example_tensor(1, 16, 128, 128),), kwargs=vae_decode_kwargs
         )
 
         # Apply AOTI
@@ -473,8 +392,7 @@ def use_export_aoti(
 
     # warmup for a few iterations
     input_kwargs = {
-        "prompt": "dummy prompt to trigger torch compilation",
-        "num_inference_steps": 4,
+        "prompt": "dummy prompt to trigger torch compilation", "num_inference_steps": 4
     }
     if is_kontext:
         input_kwargs.update({"image": Image.new("RGB", size=(1024, 1024))})
@@ -494,19 +412,16 @@ def optimize(pipeline, args):
 
     # Use flash attention v3
     if not args.disable_fa3:
-        pipeline.transformer.set_attn_processor(
-            FlashFusedFluxAttnProcessor3_0()
-        )
+        pipeline.transformer.set_attn_processor(FlashFusedFluxAttnProcessor3_0())
 
     # switch memory layout to channels_last
     if not args.disable_channels_last:
         pipeline.vae.to(memory_format=torch.channels_last)
-
+    
     # cache-dit: DBCache configs
     if args.enable_cache_dit:
         try:
             from cache_dit.cache_factory import apply_cache_on_pipe, CacheType
-
             # docs: https://github.com/vipshop/cache-dit
             cache_options = {
                 "cache_type": CacheType.DBCache,
@@ -525,16 +440,18 @@ def optimize(pipeline, args):
                 },
             }
             apply_cache_on_pipe(pipeline, **cache_options)
-        except ImportError:
-            print("Please install cache-dit via 'pip install -U cache-dit'")
-            pass
+        except ImportError as e:
+            print(
+                "You have passed the '--enable_cache_dit' flag, but we cannot "
+                "find 'cache-dit' in your environment. Please install it via "
+                "'pip install -U cache-dit' first, or re-run the process without "
+                "the '--enable_cache_dit' flag."
+            )
+            raise e
 
     # apply float8 quantization
     if not args.disable_quant:
-        from torchao.quantization import (
-            quantize_,
-            float8_dynamic_activation_float8_weight,
-        )  # , PerRow
+        from torchao.quantization import quantize_, float8_dynamic_activation_float8_weight #, PerRow
 
         quantize_(
             pipeline.transformer,
@@ -582,9 +499,7 @@ def optimize(pipeline, args):
 
 def load_pipeline(args):
     load_dtype = torch.float32 if args.disable_bf16 else torch.bfloat16
-    pipeline = DiffusionPipeline.from_pretrained(
-        args.ckpt, torch_dtype=load_dtype
-    ).to(args.device)
+    pipeline = DiffusionPipeline.from_pretrained(args.ckpt, torch_dtype=load_dtype).to(args.device)
     pipeline.set_progress_bar_config(disable=True)
     pipeline = optimize(pipeline, args)
     return pipeline
