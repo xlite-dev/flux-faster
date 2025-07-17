@@ -43,31 +43,26 @@ As you can see, under the configuration of `cache-dit + F1B0 + no warmup + Taylo
 ## Important Notes
 
 1) Please add `--enable_cache_dit` flag to use cache-dit. cache-dit doesn't work with torch.export now. cache-dit extends Flux and introduces some Python dynamic operations, so it may not be possible to export the model using torch.export.
-2) Compiling the entire transformer appears to introduce precision loss in my tests on an NVIDIA L20 device (tested with PyTorch 2.7.1). Please try to add `--only_compile_transformer_blocks` flag to compile transformer blocks only if you want to keep higer precision.
+2) Please modify the [cache_config.yaml](./cache_config.yaml) file to change the configuration of cache-dit: DBCache, so as to test the effects and performance under different configurations.
 
 ## Experiments
 
 Please run [experiments_cache.sh](https://github.com/xlite-dev/flux-faster/blob/main/experiments_cache.sh) script to reproduce the results. For example:
 
 ```bash
-# bfloat16 + only compile transformer blocks + qkv projection + channels_last + float8 quant + inductor flags 
-# + cache: F1B0 + no warmup steps + no limit cached steps + TaylorSeer
+# bfloat16 + torch.compile + qkv projection + channels_last + float8 quant + inductor flags 
+# + cache_dit
 python run_benchmark.py \
     --ckpt black-forest-labs/FLUX.1-dev \
-    --trace-file bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn.json.gz \
+    --trace-file optimized_cache_dit.json.gz \
     --compile_export_mode compile \
-    --only_compile_transformer_blocks \
     --disable_fa3 \
     --num_inference_steps 28 \
     --enable_cache_dit \
-    --Fn 1 --Bn 0 \
-    --warmup_steps 0 \
-    --max_cached_steps -1 \
-    --enable_taylorseer \
-    --output-file bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn.png \
-    > bf16_cache_F1B0W0M0_taylorseer_compile_qkv_chan_quant_flags_trn.txt 2>&1
+    --cache_dit_config cache_config.yaml \
+    --output-file optimized_cache_dit.png \
+    > optimized_cache_dit.txt 2>&1
 ```
-
 
 # flux-fast  
 Making Flux go brrr on GPUs. With simple recipes from this repo, we enabled ~2.5x speedup on Flux.1-Schnell and Flux.1-Dev using (mainly) pure PyTorch code and a beefy GPU like H100. This repo is NOT meant to be a library or an out-of-the-box solution. So, please fork the repo, hack into the code, and share your results 🤗
@@ -215,16 +210,9 @@ Usage:
 usage: run_benchmark.py [-h] [--ckpt CKPT] [--prompt PROMPT] [--image IMAGE] [--cache-dir CACHE_DIR]
                         [--use-cached-model] [--device {cuda,cpu}] [--num_inference_steps NUM_INFERENCE_STEPS] 
                         [--output-file OUTPUT_FILE] [--seed SEED] [--trace-file TRACE_FILE] [--disable_bf16]
-                        [--compile_export_mode {compile,export_aoti,disabled}] 
-                        [--only_compile_transformer_blocks] [--disable_fused_projections] 
-                        [--disable_channels_last] [--disable_fa3] [--disable_quant]
-                        [--disable_inductor_tuning_flags] [--enable_cache_dit] 
-                        [--Fn_compute_blocks FN_COMPUTE_BLOCKS] 
-                        [--Bn_compute_blocks BN_COMPUTE_BLOCKS] 
-                        [--warmup_steps WARMUP_STEPS]
-                        [--max_cached_steps MAX_CACHED_STEPS] 
-                        [--residual_diff_threshold RESIDUAL_DIFF_THRESHOLD] 
-                        [--enable_taylorseer]
+                        [--compile_export_mode {compile,export_aoti,disabled}] [--disable_fused_projections] 
+                        [--disable_channels_last] [--disable_fa3] [--disable_quant] [--disable_inductor_tuning_flags] 
+                        [--enable_cache_dit] [--cache_dit_config CACHE_DIT_CONFIG]
 
 options:
   -h, --help            show this help message and exit
@@ -233,7 +221,7 @@ options:
   --prompt PROMPT       Text prompt (default: A cat playing with a ball of yarn)
   --image IMAGE         Image to use for Kontext (default: None)
   --cache-dir CACHE_DIR
-                        Cache directory for storing exported models (default: /root/.cache/flux-fast)
+                        Cache directory for storing exported models (default: ~/.cache/flux-fast)
   --use-cached-model    Attempt to use cached model only (don't re-export) (default: False)
   --device {cuda,cpu}   Device to use (default: cuda)
   --num_inference_steps NUM_INFERENCE_STEPS
@@ -246,8 +234,6 @@ options:
   --disable_bf16        Disables usage of torch.bfloat16 (default: False)
   --compile_export_mode {compile,export_aoti,disabled}
                         Configures how torch.compile or torch.export + AOTI are used (default: export_aoti)
-  --only_compile_transformer_blocks
-                        Only compile Transformer Blocks for higher precision (default: False)
   --disable_fused_projections
                         Disables fused q,k,v projections (default: False)
   --disable_channels_last
@@ -257,17 +243,8 @@ options:
   --disable_inductor_tuning_flags
                         Disables use of inductor tuning flags (default: False)
   --enable_cache_dit    Enables use of cache-dit: DBCache (default: False)
-  --Fn_compute_blocks FN_COMPUTE_BLOCKS, --Fn FN_COMPUTE_BLOCKS
-                        Fn compute blocks of cache-dit: DBCache (default: 1)
-  --Bn_compute_blocks BN_COMPUTE_BLOCKS, --Bn BN_COMPUTE_BLOCKS
-                        Bn compute blocks of cache-dit: DBCache (default: 0)
-  --warmup_steps WARMUP_STEPS
-                        Warmup steps of cache-dit: DBCache (default: 0)
-  --max_cached_steps MAX_CACHED_STEPS
-                        Max Cached steps of cache-dit: DBCache (default: -1)
-  --residual_diff_threshold RESIDUAL_DIFF_THRESHOLD
-                        Residual diff threshold of cache-dit: DBCache (default: 0.12)
-  --enable_taylorseer   Enables use of cache-dit: DBCache with TaylorSeer (default: False)
+  --cache_dit_config CACHE_DIT_CONFIG
+                        Cache options config of cache-dit: DBCache (default: cache_config.yaml)
 ```
 
 Note that all optimizations are on by default and each can be individually toggled. Example run:
@@ -828,6 +805,6 @@ As you can see, under the configuration of `cache-dit + F1B0 + no warmup + Taylo
 ### Important Notes
 
 1) Please add `--enable_cache_dit` flag to use cache-dit. cache-dit doesn't work with torch.export now. cache-dit extends Flux and introduces some Python dynamic operations, so it may not be possible to export the model using torch.export.
-2) Compiling the entire transformer appears to introduce precision loss in my tests on an NVIDIA L20 device (tested with PyTorch 2.7.1). Please try to add `--only_compile_transformer_blocks` flag to compile transformer blocks only if you want to keep higer precision.
+2) Please modify the [cache_config.yaml](./cache_config.yaml) file to change the configuration of cache-dit: DBCache, so as to test the effects and performance under different configurations.
 
 </details>

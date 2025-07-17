@@ -86,12 +86,6 @@ def create_parser():
         choices=["compile", "export_aoti", "disabled"],
         help="Configures how torch.compile or torch.export + AOTI are used",
     )
-    # only compile transformer blocks
-    parser.add_argument(
-        "--only_compile_transformer_blocks",
-        action="store_true",
-        help="Only compile Transformer Blocks for higher precision",
-    )
     # fused (q, k, v) projections
     parser.add_argument(
         "--disable_fused_projections",
@@ -129,41 +123,10 @@ def create_parser():
         help="Enables use of cache-dit: DBCache",
     )
     parser.add_argument(
-        "--Fn_compute_blocks",
-        "--Fn",
-        type=int,
-        default=1,
-        help="Fn compute blocks of cache-dit: DBCache",
-    )
-    parser.add_argument(
-        "--Bn_compute_blocks",
-        "--Bn",
-        type=int,
-        default=0,
-        help="Bn compute blocks of cache-dit: DBCache",
-    )
-    parser.add_argument(
-        "--warmup_steps",
-        type=int,
-        default=0,
-        help="Warmup steps of cache-dit: DBCache",
-    )
-    parser.add_argument(
-        "--max_cached_steps",
-        type=int,
-        default=-1,
-        help="Max Cached steps of cache-dit: DBCache",
-    )
-    parser.add_argument(
-        "--residual_diff_threshold",
-        type=float,
-        default=0.12,
-        help="Residual diff threshold of cache-dit: DBCache",
-    )
-    parser.add_argument(
-        "--enable_taylorseer",
-        action="store_true",
-        help="Enables use of cache-dit: DBCache with TaylorSeer",
+        "--cache_dit_config",
+        type=str,
+        default="cache_config.yaml",
+        help="Cache options config of cache-dit: DBCache",
     )
     return parser
 
