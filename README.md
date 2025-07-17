@@ -210,16 +210,9 @@ Usage:
 usage: run_benchmark.py [-h] [--ckpt CKPT] [--prompt PROMPT] [--image IMAGE] [--cache-dir CACHE_DIR]
                         [--use-cached-model] [--device {cuda,cpu}] [--num_inference_steps NUM_INFERENCE_STEPS] 
                         [--output-file OUTPUT_FILE] [--seed SEED] [--trace-file TRACE_FILE] [--disable_bf16]
-                        [--compile_export_mode {compile,export_aoti,disabled}] 
-                        [--only_compile_transformer_blocks] [--disable_fused_projections] 
-                        [--disable_channels_last] [--disable_fa3] [--disable_quant]
-                        [--disable_inductor_tuning_flags] [--enable_cache_dit] 
-                        [--Fn_compute_blocks FN_COMPUTE_BLOCKS] 
-                        [--Bn_compute_blocks BN_COMPUTE_BLOCKS] 
-                        [--warmup_steps WARMUP_STEPS]
-                        [--max_cached_steps MAX_CACHED_STEPS] 
-                        [--residual_diff_threshold RESIDUAL_DIFF_THRESHOLD] 
-                        [--enable_taylorseer]
+                        [--compile_export_mode {compile,export_aoti,disabled}] [--disable_fused_projections] 
+                        [--disable_channels_last] [--disable_fa3] [--disable_quant] [--disable_inductor_tuning_flags] 
+                        [--enable_cache_dit] [--cache_dit_config CACHE_DIT_CONFIG]
 
 options:
   -h, --help            show this help message and exit
@@ -228,7 +221,7 @@ options:
   --prompt PROMPT       Text prompt (default: A cat playing with a ball of yarn)
   --image IMAGE         Image to use for Kontext (default: None)
   --cache-dir CACHE_DIR
-                        Cache directory for storing exported models (default: /root/.cache/flux-fast)
+                        Cache directory for storing exported models (default: ~/.cache/flux-fast)
   --use-cached-model    Attempt to use cached model only (don't re-export) (default: False)
   --device {cuda,cpu}   Device to use (default: cuda)
   --num_inference_steps NUM_INFERENCE_STEPS
@@ -241,8 +234,6 @@ options:
   --disable_bf16        Disables usage of torch.bfloat16 (default: False)
   --compile_export_mode {compile,export_aoti,disabled}
                         Configures how torch.compile or torch.export + AOTI are used (default: export_aoti)
-  --only_compile_transformer_blocks
-                        Only compile Transformer Blocks for higher precision (default: False)
   --disable_fused_projections
                         Disables fused q,k,v projections (default: False)
   --disable_channels_last
@@ -252,17 +243,8 @@ options:
   --disable_inductor_tuning_flags
                         Disables use of inductor tuning flags (default: False)
   --enable_cache_dit    Enables use of cache-dit: DBCache (default: False)
-  --Fn_compute_blocks FN_COMPUTE_BLOCKS, --Fn FN_COMPUTE_BLOCKS
-                        Fn compute blocks of cache-dit: DBCache (default: 1)
-  --Bn_compute_blocks BN_COMPUTE_BLOCKS, --Bn BN_COMPUTE_BLOCKS
-                        Bn compute blocks of cache-dit: DBCache (default: 0)
-  --warmup_steps WARMUP_STEPS
-                        Warmup steps of cache-dit: DBCache (default: 0)
-  --max_cached_steps MAX_CACHED_STEPS
-                        Max Cached steps of cache-dit: DBCache (default: -1)
-  --residual_diff_threshold RESIDUAL_DIFF_THRESHOLD
-                        Residual diff threshold of cache-dit: DBCache (default: 0.12)
-  --enable_taylorseer   Enables use of cache-dit: DBCache with TaylorSeer (default: False)
+  --cache_dit_config CACHE_DIT_CONFIG
+                        Cache options config of cache-dit: DBCache (default: cache_config.yaml)
 ```
 
 Note that all optimizations are on by default and each can be individually toggled. Example run:
