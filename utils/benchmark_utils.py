@@ -118,14 +118,9 @@ def create_parser():
     )
     # cache-dit: DBCache configs
     parser.add_argument(
-        "--enable_cache_dit",
-        action="store_true",
-        help="Enables use of cache-dit: DBCache",
-    )
-    parser.add_argument(
         "--cache_dit_config",
         type=str,
-        default="cache_config.yaml",
+        default=None,
         help="Cache options config of cache-dit: DBCache",
     )
     return parser
