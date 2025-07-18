@@ -35,7 +35,6 @@ python run_benchmark.py \
     --compile_export_mode compile \
     --disable_fa3 \
     --num_inference_steps 28 \
-    --enable_cache_dit \
     --cache_dit_config cache_config.yaml \
     --output-file optimized_cache_dit.png \
     > optimized_cache_dit.txt 2>&1

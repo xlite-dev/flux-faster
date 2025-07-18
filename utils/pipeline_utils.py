@@ -481,7 +481,7 @@ def optimize(pipeline, args):
         pipeline.vae.to(memory_format=torch.channels_last)
 
     # cache-dit: DBCache configs
-    if args.enable_cache_dit:
+    if args.cache_dit_config is not None:
         if args.ckpt.endswith("schnell"):
             raise ValueError(
                 "cache-dit is not suitable for FLUX.1-schnell with only 4 steps "
@@ -497,10 +497,10 @@ def optimize(pipeline, args):
             apply_cache_on_pipe(pipeline, **cache_options)
         except ImportError as e:
             print(
-                "You have passed the '--enable_cache_dit' flag, but we cannot "
+                "You have passed the '--cache_dit_config' flag, but we cannot "
                 "find 'cache-dit' in your environment. Please install it via "
                 "'pip install -U cache-dit' first, or re-run the process without "
-                "the '--enable_cache_dit' flag."
+                "the '--cache_dit_config' flag."
             )
             raise e
 
@@ -533,7 +533,7 @@ def optimize(pipeline, args):
     if args.compile_export_mode == "compile":
         pipeline = use_compile(pipeline)
     elif args.compile_export_mode == "export_aoti":
-        if not args.enable_cache_dit:
+        if args.cache_dit_config is not None:
             pipeline = use_export_aoti(
                 pipeline,
                 cache_dir=args.cache_dir,
